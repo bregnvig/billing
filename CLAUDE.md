@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This application tracks **working hours per weekday**. It has three parts:
+**Loopme** tracks **working hours per weekday**. It has three parts:
 
 1. **Frontend (this Angular app)**: shows the hours worked on each weekday and lets the user edit them.
 2. **Firebase backend**: stores all data in Firestore. For now it runs only in the local emulator (demo project `demo-billing`, fake config).
@@ -30,15 +30,27 @@ Types, Firestore converters and collection refs live in `src/app/data/`. Top-lev
 ## Tech stack
 
 - Angular 22 (standalone components), TypeScript 6
-- Tailwind CSS 4 (via PostCSS)
+- Tailwind CSS 4 (via PostCSS) + **SCSS** for all styles
+  - `src/tailwind.css` is the one plain-CSS file: Tailwind 4 doesn't support Sass, so its `@import`, `@source` and `@theme` tokens (light values) live there.
+  - `src/styles.scss` holds everything else: the `dark-tokens` mixin, base styles, icons. Component styles are `.scss` too.
+  - Fonts (Roboto, Roboto Mono) and Material Symbols are self-hosted npm packages loaded via `angular.json` `styles`.
 - Firebase JS SDK (Firestore + Auth), exposed through injection tokens in `src/app/firebase/`
 - Vitest for unit tests (`npm test`)
 - Prettier: 100 char width, single quotes, Angular HTML parser
+- UI look and UX rules: the `ui-design` skill in `.claude/skills/` (Firebase-console style, Loopme teal accent, light + dark)
+
+## Code conventions
+
+- **Arrow functions only.** No `function` declarations and no method shorthand in object literals: `const toIsoDate = (d: Date) => …`, `{ fromFirestore: (snap) => … }`. Class methods are arrow-function properties too: `readonly save = () => …`.
+  - Exception: Angular **lifecycle hooks** (`ngOnInit`, `ngOnChanges`, `ngOnDestroy`, `ngAfterViewInit`, …) must be real methods. Angular finds them on the prototype, so an arrow property would silently never run.
+- **True privates.** Use `#field` / `#method = () => …` for anything private, never the `private` keyword.
+  - Exception: members used in a **template** can't be `#private` (templates can't see them). Make those `protected`.
+- Prefer `inject()` over constructor parameters, so services end up as `readonly #db = inject(FIRESTORE)`.
 
 ## Commands
 
 - `npm run emulators`: start the Firebase emulators (UI at http://127.0.0.1:4100, Firestore 8180, Auth 9199). Data is saved to `.firebase-data/` on exit. The ports are non-default because the F2020 project's emulator uses the defaults.
-- `npm run kill-ports`: stop emulator processes that won't die. Only touches processes started from this project, sends SIGTERM first (so data still exports) and SIGKILL after 8s. `-- --force` kills right away.
+- `npm run kill-ports`: force-kills whatever listens on this project's emulator ports (same approach as F2020, via `kill-port`). It's `kill -9`, so the emulator does **not** export data; prefer Ctrl+C and use this only when the emulator won't die.
 - `npm start`: dev server (`ng serve`). Expects the emulators to be running
 - `npm run build`: production build
 - `npm test`: run unit tests

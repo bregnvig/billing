@@ -8,7 +8,7 @@ export const FIREBASE_APP = new InjectionToken<FirebaseApp>('FIREBASE_APP');
 export const FIRESTORE = new InjectionToken<Firestore>('FIRESTORE');
 export const FIREBASE_AUTH = new InjectionToken<Auth>('FIREBASE_AUTH');
 
-export function provideFirebase(): EnvironmentProviders {
+export const provideFirebase = (): EnvironmentProviders => {
   const app = initializeApp(firebaseConfig);
 
   const firestore = getFirestore(app);
@@ -24,4 +24,4 @@ export function provideFirebase(): EnvironmentProviders {
     { provide: FIRESTORE, useValue: firestore },
     { provide: FIREBASE_AUTH, useValue: auth },
   ]);
-}
+};

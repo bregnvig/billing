@@ -8,14 +8,11 @@ export const COLLECTIONS = {
   timeEntries: 'timeEntries',
 } as const;
 
-export function projectsCollection(db: Firestore): CollectionReference<Project> {
-  return collection(db, COLLECTIONS.projects).withConverter(projectConverter);
-}
+export const projectsCollection = (db: Firestore): CollectionReference<Project> =>
+  collection(db, COLLECTIONS.projects).withConverter(projectConverter);
 
-export function tasksCollection(db: Firestore): CollectionReference<Task> {
-  return collection(db, COLLECTIONS.tasks).withConverter(taskConverter);
-}
+export const tasksCollection = (db: Firestore): CollectionReference<Task> =>
+  collection(db, COLLECTIONS.tasks).withConverter(taskConverter);
 
-export function timeEntriesCollection(db: Firestore): CollectionReference<TimeEntry> {
-  return collection(db, COLLECTIONS.timeEntries).withConverter(timeEntryConverter);
-}
+export const timeEntriesCollection = (db: Firestore): CollectionReference<TimeEntry> =>
+  collection(db, COLLECTIONS.timeEntries).withConverter(timeEntryConverter);

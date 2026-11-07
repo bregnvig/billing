@@ -19,9 +19,8 @@ const entry: TimeEntry = {
   updatedAt: at('12:15'),
 };
 
-function fakeSnapshot(id: string, data: Record<string, unknown>): QueryDocumentSnapshot {
-  return { id, data: () => ({ ...data }) } as unknown as QueryDocumentSnapshot;
-}
+const fakeSnapshot = (id: string, data: Record<string, unknown>): QueryDocumentSnapshot =>
+  ({ id, data: () => ({ ...data }) }) as unknown as QueryDocumentSnapshot;
 
 describe('timeEntryConverter', () => {
   it('stores period dates as Timestamps, keeps running ends null and drops the id', () => {

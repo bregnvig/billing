@@ -15,7 +15,7 @@
  * live in the UI (see the `ui-design` skill), so stored data doesn't depend on the theme.
  */
 export type ProjectColor =
-  'blue' | 'orange' | 'pink' | 'cyan' | 'green' | 'purple' | 'yellow' | 'red';
+  'blue' | 'orange' | 'pink' | 'brown' | 'green' | 'purple' | 'yellow' | 'red';
 
 /** Something hours can be booked against. */
 export interface Project {
@@ -86,33 +86,28 @@ export type NewProject = Pick<Project, 'name'> & Partial<Pick<Project, 'color'>>
 export type NewTask = Pick<Task, 'projectId' | 'name'>;
 
 /** Document id for the entry of a given day/project/task, e.g. `2026-11-05_acme_api` or `2026-11-05__`. */
-export function timeEntryId(
+export const timeEntryId = (
   date: IsoDate,
   projectId: string | null,
   taskId: string | null,
-): string {
-  return `${date}_${projectId ?? ''}_${taskId ?? ''}`;
-}
+): string => `${date}_${projectId ?? ''}_${taskId ?? ''}`;
 
 /** Local `YYYY-MM-DD` for a Date (not UTC, so late-evening work stays on the right day). */
-export function toIsoDate(d: Date): IsoDate {
+export const toIsoDate = (d: Date): IsoDate => {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
+};
 
 /** Duration of a period in milliseconds. Running periods are measured up to `now`. */
-export function periodDurationMs(period: Pick<Period, 'start' | 'end'>, now = new Date()): number {
-  const end = period.end ?? now;
-  return Math.max(0, end.getTime() - period.start.getTime());
-}
+export const periodDurationMs = (period: Pick<Period, 'start' | 'end'>, now = new Date()): number =>
+  Math.max(0, (period.end ?? now).getTime() - period.start.getTime());
 
 /** Total duration of an entry's periods of the given type, in milliseconds. */
-export function entryDurationMs(
+export const entryDurationMs = (
   entry: Pick<TimeEntry, 'periods'>,
   type: PeriodType = 'work',
   now = new Date(),
-): number {
-  return entry.periods
+): number =>
+  entry.periods
     .filter((p) => p.type === type)
     .reduce((sum, p) => sum + periodDurationMs(p, now), 0);
-}

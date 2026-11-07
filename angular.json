@@ -8,7 +8,11 @@
   "projects": {
     "billing": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
@@ -25,8 +29,14 @@
               }
             ],
             "styles": [
-              "src/styles.css"
-            ]
+              "@fontsource/roboto/400.css",
+              "@fontsource/roboto/500.css",
+              "@fontsource/roboto-mono/400.css",
+              "material-symbols/outlined.css",
+              "src/tailwind.css",
+              "src/styles.scss"
+            ],
+            "inlineStyleLanguage": "scss"
           },
           "configurations": {
             "production": {

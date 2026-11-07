@@ -21,7 +21,7 @@ const auditFromFirestore = (data: DocumentData) => ({
 
 export const projectConverter: FirestoreDataConverter<Project> = {
   toFirestore: ({ id: _id, ...p }: Project): DocumentData => ({ ...p, ...auditToFirestore(p) }),
-  fromFirestore(snapshot: QueryDocumentSnapshot, options?: SnapshotOptions): Project {
+  fromFirestore: (snapshot: QueryDocumentSnapshot, options?: SnapshotOptions): Project => {
     const data = snapshot.data(options);
     return {
       id: snapshot.id,
@@ -35,7 +35,7 @@ export const projectConverter: FirestoreDataConverter<Project> = {
 
 export const taskConverter: FirestoreDataConverter<Task> = {
   toFirestore: ({ id: _id, ...t }: Task): DocumentData => ({ ...t, ...auditToFirestore(t) }),
-  fromFirestore(snapshot: QueryDocumentSnapshot, options?: SnapshotOptions): Task {
+  fromFirestore: (snapshot: QueryDocumentSnapshot, options?: SnapshotOptions): Task => {
     const data = snapshot.data(options);
     return {
       id: snapshot.id,
@@ -47,25 +47,21 @@ export const taskConverter: FirestoreDataConverter<Task> = {
   },
 };
 
-export function periodToFirestore(p: Period): DocumentData {
-  return {
-    id: p.id,
-    start: Timestamp.fromDate(p.start),
-    end: toTimestamp(p.end),
-    type: p.type,
-    source: p.source,
-  };
-}
+export const periodToFirestore = (p: Period): DocumentData => ({
+  id: p.id,
+  start: Timestamp.fromDate(p.start),
+  end: toTimestamp(p.end),
+  type: p.type,
+  source: p.source,
+});
 
-function periodFromFirestore(data: DocumentData): Period {
-  return {
-    id: data['id'],
-    start: toDate(data['start'])!,
-    end: toDate(data['end']),
-    type: data['type'] ?? 'work',
-    source: data['source'],
-  };
-}
+const periodFromFirestore = (data: DocumentData): Period => ({
+  id: data['id'],
+  start: toDate(data['start'])!,
+  end: toDate(data['end']),
+  type: data['type'] ?? 'work',
+  source: data['source'],
+});
 
 export const timeEntryConverter: FirestoreDataConverter<TimeEntry> = {
   toFirestore: ({ id: _id, ...e }: TimeEntry): DocumentData => ({
@@ -73,7 +69,7 @@ export const timeEntryConverter: FirestoreDataConverter<TimeEntry> = {
     periods: e.periods.map(periodToFirestore),
     ...auditToFirestore(e),
   }),
-  fromFirestore(snapshot: QueryDocumentSnapshot, options?: SnapshotOptions): TimeEntry {
+  fromFirestore: (snapshot: QueryDocumentSnapshot, options?: SnapshotOptions): TimeEntry => {
     const data = snapshot.data(options);
     const periods = ((data['periods'] ?? []) as DocumentData[])
       .map(periodFromFirestore)

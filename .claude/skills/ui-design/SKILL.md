@@ -1,6 +1,6 @@
 ---
 name: ui-design
-description: Visual style and UX rules for the billing (working-hours) app, which follows the Firebase console look (Material 3, Google style) in light and dark. Use whenever building, changing or reviewing any UI in this project - components, templates, styles, forms, layouts, charts, tables, empty/loading/error states, or UI text.
+description: Visual style and UX rules for the billing (working-hours) app, which follows the Firebase console look (Material 3, Google style) with the Loopme teal accent, in light and dark. Use whenever building, changing or reviewing any UI in this project - components, templates, styles, forms, layouts, charts, tables, empty/loading/error states, or UI text.
 ---
 
 # UI design for the working-hours app
@@ -15,7 +15,7 @@ The app follows the **visual language of the Firebase console**: Google's Materi
 - **Big, light-weight headings**: page titles are large but **regular weight** (`f1-2024`, `Database`). Section headings are mid-size and **muted grey** (`Build`, `Get started`).
 - **Metric cards**: icon + card title, then a small label with a muted qualifier (`Reads (current)`), then a **big number** with a small muted delta next to it (`7.7k +52.7%`), then a thin line chart.
 - **Charts**: thin lines, **solid = this week, dashed = last week**, a dot on the latest point, minimal axes (only min/max/0 labels), legend bottom-right.
-- **Google blue** as the only accent: links, active tab text + underline, selected item bar, checkboxes, chart lines.
+- **One accent color: Loopme teal** (from the app icon) instead of Firebase's Google blue: links, active tab text + underline, selected item bar, checkboxes, chart lines.
 - **Pill controls**: dropdowns and secondary buttons are fully rounded pills (`Projects ▾`, `+ Add app`, `(default) ▾`).
 - **Badges**: small pills with an outline or fill (`Blaze plan` amber outline, `Prod` red fill).
 - **Data tables** inside cards: a slightly raised header band, thin row dividers, numbers right-aligned, ids/queries in monospace, pagination bottom-right (`1–7 of 7  ‹ ›`).
@@ -24,13 +24,13 @@ The app follows the **visual language of the Firebase console**: Google's Materi
 - **Material Symbols (Outlined)** icons, grey, 20-24px.
 - **Two-line date range control**: calendar icon + `Last 24 hours` / `Nov 6 - Nov 7` + dropdown arrow.
 
-**Not allowed**: the Firebase name, flame logo or any Google product branding. The app has its own name and icon. Firebase's typeface (Google Sans) isn't licensed for us, so use **Roboto** (the open Material font), which is close.
+**Not allowed**: the Firebase name, flame logo or any Google product branding. The app is **Loopme** with its own teal "L" icon (`public/loopme.svg`, `public/favicon.svg`). Firebase's typeface (Google Sans) isn't licensed for us, so use **Roboto** (the open Material font), which is close.
 
 Also avoid: extra gradients (the only one allowed is the warm greeting heading, see below), shadows on cards, emoji icons, colored card backgrounds, and color as the only way a state is shown.
 
 ## 2. Design tokens
 
-All values come from tokens defined in `src/styles.css` under Tailwind 4's `@theme`. Never hard-code a color, font size, spacing or radius in a component. If a value is missing, add a token (with both light and dark values) instead.
+All values come from tokens: the light values are in `src/tailwind.css` under Tailwind 4's `@theme`, and the dark values are in the `dark-tokens` mixin in `src/styles.scss`. The block below shows them together for reference; the files are the source of truth. Never hard-code a color, font size, spacing or radius in a component. If a value is missing, add a token (with both light and dark values) instead.
 
 ```css
 @import 'tailwindcss';
@@ -45,8 +45,8 @@ All values come from tokens defined in `src/styles.css` under Tailwind 4's `@the
   --color-muted: #5f6368;         /* secondary text, section headings, axis labels */
   --color-ink: #1f1f1f;           /* primary text, numbers */
 
-  --color-accent: #1967d2;        /* links, active tab, selection, focus, chart "this week" */
-  --color-accent-soft: #e8f0fe;   /* selected item background, today */
+  --color-accent: #00796b;        /* Loopme teal, deepened for contrast: links, active tab, selection, focus, chart "this week" */
+  --color-accent-soft: #e0f2f1;   /* selected item background, today */
   --color-on-accent: #ffffff;     /* text on filled accent buttons */
 
   /* Semantic: running/unassigned are for indicators, outlines, icons and badges (>= 3:1).
@@ -92,9 +92,9 @@ All values come from tokens defined in `src/styles.css` under Tailwind 4's `@the
   --color-line: #444746;
   --color-muted: #a8abae;
   --color-ink: #e3e3e3;
-  --color-accent: #8ab4f8;
-  --color-accent-soft: #283142;
-  --color-on-accent: #062e6f;
+  --color-accent: #02a79e;
+  --color-accent-soft: #1d3533;
+  --color-on-accent: #00201d;
   --color-running: #81c995;
   --color-unassigned: #fdd663;
   --color-danger: #f28b82;
@@ -110,9 +110,9 @@ All values come from tokens defined in `src/styles.css` under Tailwind 4's `@the
     --color-line: #444746;
     --color-muted: #a8abae;
     --color-ink: #e3e3e3;
-    --color-accent: #8ab4f8;
-    --color-accent-soft: #283142;
-    --color-on-accent: #062e6f;
+    --color-accent: #02a79e;
+    --color-accent-soft: #1d3533;
+    --color-on-accent: #00201d;
     --color-running: #81c995;
     --color-unassigned: #fdd663;
     --color-danger: #f28b82;
@@ -135,7 +135,7 @@ Projects store a palette key (`ProjectColor` in `src/app/data/model.ts`), not a 
 | `blue` | `#1a73e8` | `#8ab4f8` | ● circle |
 | `orange` | `#e8710a` | `#fcad70` | ■ square |
 | `pink` | `#d01884` | `#ff8bcb` | ◆ diamond |
-| `cyan` | `#129eaf` | `#78d9ec` | ▼ triangle down |
+| `brown` | `#8d5b3a` | `#d7a98b` | ▼ triangle down |
 | `green` | `#188038` | `#81c995` | ▲ triangle up |
 | `purple` | `#9334e6` | `#d7aefb` | ◗ half circle |
 | `yellow` | `#b06000` | `#fdd663` | ✚ plus |
@@ -153,7 +153,8 @@ Both themes are first-class. The Firebase screenshots are dark, and light follow
 - **Layering**:
   - Dark: `canvas` (darkest) < `rail`/`surface` < `raised`. Rows inside a card can also be *darker* than the card (`canvas`), like the project list on the Firebase home page.
   - Light: `canvas` is light grey and cards are white, with borders doing the separating.
-- **Accent changes per theme**: light blue `#8ab4f8` on dark, and deeper blue `#1967d2` on light. Filled accent buttons use `on-accent` text.
+- **Accent changes per theme**: the exact brand teal `#02a79e` on dark, and a deeper teal `#00796b` on light (the brand teal is only ~2.8:1 on white). Filled accent buttons use `on-accent` text.
+- **No cyan/teal project color**: it would be confused with the accent.
 - **No pure black or pure white text**, and no `#000` backgrounds.
 - **Check both**: every screen and state is checked in light *and* dark before it's done.
 
@@ -252,9 +253,10 @@ Both themes are first-class. The Firebase screenshots are dark, and light follow
 
 - Standalone components, `OnPush` (the default), signals for state, `input()`/`output()` functions, built-in control flow (`@if`, `@for` with `track`).
 - Forms: signal forms (`@angular/forms/signals`), see the `reference-signal-forms` skill.
-- Style with Tailwind utility classes in templates, using the token names (`bg-surface`, `text-muted`, `border-line`, `text-accent`). Component CSS files only for things Tailwind can't express, like the hatched break pattern, chart strokes or the timeline grid.
+- Style with Tailwind utility classes in templates, using the token names (`bg-surface`, `text-muted`, `border-line`, `text-accent`). Component **SCSS** files (`styleUrl: './x.scss'`) only for things Tailwind can't express, like the hatched break pattern, chart strokes or the timeline grid. Use `var(--color-…)` tokens there, never raw values.
 - Shared UI pieces (card, pill button, badge, time input, project picker, period bar, marker, line chart) live in `src/app/ui/` and are reused, not re-styled per screen.
-- Fonts (Roboto, Roboto Mono) and Material Symbols are self-hosted via `@fontsource` packages, not loaded from a CDN at runtime.
+- Fonts and icons are self-hosted from npm packages, not loaded from a CDN at runtime: `@fontsource/roboto`, `@fontsource/roboto-mono`, and `material-symbols` (outlined).
+- Code style (see CLAUDE.md): arrow functions only (except lifecycle hooks), `#private` members (template-bound members are `protected`).
 
 ## Checklist before calling UI work done
 

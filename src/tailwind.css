@@ -1,0 +1,56 @@
+/* Tailwind entry point. Tailwind 4 must read this file as plain CSS (it doesn't support
+   Sass), so it only holds what Tailwind itself needs: the import, sources and the @theme
+   tokens (light values). Everything else lives in styles.scss.
+   Rules: .claude/skills/ui-design/SKILL.md */
+
+@import 'tailwindcss';
+
+/* Scan only the app; docs/skills contain "don't do this" class examples. */
+@source not '../.claude';
+
+@theme {
+  /* Light theme (default values) */
+  --color-canvas: #f8f9fa;
+  --color-rail: #f1f3f4;
+  --color-surface: #ffffff;
+  --color-raised: #f1f3f4;
+  --color-line: #c4c7c5;
+  --color-muted: #5f6368;
+  --color-ink: #1f1f1f;
+
+  --color-accent: #00796b;
+  --color-accent-soft: #e0f2f1;
+  --color-on-accent: #ffffff;
+
+  --color-running: #188038;
+  --color-unassigned: #b06000;
+  --color-danger: #c5221f;
+
+  --color-greet-from: #e37400;
+  --color-greet-to: #d93025;
+
+  /* Project palette (keys match ProjectColor in src/app/data/model.ts) */
+  --color-project-blue: #1a73e8;
+  --color-project-orange: #e8710a;
+  --color-project-pink: #d01884;
+  --color-project-brown: #8d5b3a;
+  --color-project-green: #188038;
+  --color-project-purple: #9334e6;
+  --color-project-yellow: #b06000;
+  --color-project-red: #d93025;
+
+  /* Type */
+  --font-sans: 'Roboto', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Roboto Mono', ui-monospace, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-5xl: 3rem;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
