@@ -10,11 +10,16 @@ This application tracks **working hours per weekday**. It has three parts:
 
 ## Domain model
 
-- **Project**: something hours can be booked against. Every time entry belongs to exactly one project.
+- **Project**: something hours can be booked against. Every time entry is booked on at most one project.
 - **Task**: an optional subdivision of a project. A time entry may or may not reference a task.
-- **Time entry / working period**: a start and stop time on a given day, assigned to a project and optionally a task.
-  - Entries can be created automatically by the OS hooks or by hand in the UI.
-  - All entries, including those from hooks, can be edited or deleted in the UI.
+- **Time entry**: all time on **one day** for one project + task combination. Document id is `{date}_{projectId}_{taskId}` (empty segments for null), see `timeEntryId()`.
+  - Holds a list of **periods** (start/end), because the same project/task is often worked on several times a day.
+  - Each period has a `type`: `work` or `break`. Breaks are recorded but don't count toward worked hours.
+  - Each period has a `source`: `hook` (from the OS hooks) or `manual` (entered in the UI). All periods can be edited or deleted in the UI.
+  - Hook periods land in the day's **unassigned** entry (`projectId: null`). The hooks only know when work started and stopped, so the user moves those periods to a project/task in the UI.
+  - A running period has `end: null` until a stop is reported.
+
+Types, Firestore converters and collection refs live in `src/app/data/`. Top-level collections: `projects`, `tasks` (with `projectId`), `timeEntries`.
 
 ## Core UI expectations
 
@@ -33,6 +38,7 @@ This application tracks **working hours per weekday**. It has three parts:
 ## Commands
 
 - `npm run emulators`: start the Firebase emulators (UI at http://127.0.0.1:4100, Firestore 8180, Auth 9199). Data is saved to `.firebase-data/` on exit. The ports are non-default because the F2020 project's emulator uses the defaults.
+- `npm run kill-ports`: stop emulator processes that won't die. Only touches processes started from this project, sends SIGTERM first (so data still exports) and SIGKILL after 8s. `-- --force` kills right away.
 - `npm start`: dev server (`ng serve`). Expects the emulators to be running
 - `npm run build`: production build
 - `npm test`: run unit tests

@@ -7,7 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "emulators": "firebase emulators:start --project demo-billing --import=./.firebase-data --export-on-exit"
+    "emulators": "firebase emulators:start --project demo-billing --import=./.firebase-data --export-on-exit",
+    "kill-ports": "node scripts/kill-ports.mjs"
   },
   "private": true,
   "packageManager": "npm@11.20.0",
