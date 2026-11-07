@@ -26,6 +26,15 @@
         themeIcons[theme.setting()]
       }}</span>
     </button>
+    <button
+      type="button"
+      class="flex size-10 items-center justify-center rounded-full text-muted transition-colors duration-150 hover:bg-raised hover:text-ink"
+      (click)="signOut()"
+      [attr.aria-label]="'Sign out ' + (auth.user()?.email ?? '')"
+      [title]="'Sign out ' + (auth.user()?.email ?? '')"
+    >
+      <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+    </button>
   </nav>
   <main class="min-w-0 flex-1 overflow-auto">
     <router-outlet />

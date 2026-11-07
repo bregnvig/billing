@@ -21,6 +21,12 @@
 
 Types, Firestore converters and collection refs live in `src/app/data/`. Top-level collections: `projects`, `tasks` (with `projectId`), `timeEntries`.
 
+## Auth
+
+- Google sign-in only, and only **one allowed account**: `allowedEmail` in `src/app/firebase/firebase.config.ts`, duplicated in `firestore.rules` (keep both in sync). The email must be verified.
+- `AuthService` (`src/app/auth/`) exposes `user` / `allowed` signals. `authGuard` protects everything under the `Shell` layout, and `loginGuard` keeps the allowed user off `/login`.
+- In the emulator, "Sign in with Google" opens a fake account picker: add an account with the allowed email there.
+
 ## Core UI expectations
 
 - A weekday view (Mon–Fri) showing hours worked per day, broken down by project/task.

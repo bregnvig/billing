@@ -1,9 +1,16 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Emulator-only: open access. Tighten before deploying to a real project.
+    // Only the owner's verified Google account. Keep in sync with `allowedEmail`
+    // in src/app/firebase/firebase.config.ts.
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email == 'flemming@loopme.dk'
+        && request.auth.token.email_verified == true;
+    }
+
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if isOwner();
     }
   }
 }

@@ -18,3 +18,9 @@ export const emulatorPorts = {
   auth: 9199,
   firestore: 8180,
 } as const;
+
+/**
+ * The only account allowed to use the app. Also hard-coded in `firestore.rules`
+ * (rules can't import app config), so change both together.
+ */
+export const allowedEmail = 'flemming@loopme.dk';
