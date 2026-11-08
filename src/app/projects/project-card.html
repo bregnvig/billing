@@ -1,0 +1,164 @@
+<div class="flex flex-wrap items-center gap-3">
+  @if (renaming()) {
+  <form novalidate class="flex flex-1 flex-wrap items-start gap-2" (submit)="saveName($event)" (keydown.escape)="renaming.set(false)">
+    <div class="min-w-48 flex-1">
+      <label [for]="'project-name-' + project().id" class="sr-only">{{ 'projects.name' | translate }}</label>
+      <input
+        [id]="'project-name-' + project().id"
+        class="h-10 w-full rounded-md border border-line bg-surface px-3 outline-none focus:border-2 focus:border-accent"
+        autocomplete="off"
+        [value]="name()"
+        (input)="name.set($any($event.target).value)"
+        [attr.aria-invalid]="!!nameProblem()" />
+      @if (nameProblem(); as problem) {
+      <p class="mt-1 text-xs text-danger">{{ 'projects.errors.name.' + problem | translate }}</p>
+      }
+    </div>
+    <button type="button" class="h-10 rounded-full px-4 transition-colors duration-150 hover:bg-raised" (click)="renaming.set(false)">
+      {{ 'projects.cancel' | translate }}
+    </button>
+    <button
+      type="submit"
+      class="h-10 rounded-full bg-accent px-5 font-medium text-on-accent transition-opacity duration-150 hover:opacity-90 disabled:opacity-60"
+      [disabled]="busy() || !!nameProblem()">
+      {{ 'projects.save' | translate }}
+    </button>
+  </form>
+  } @else {
+  <h2 class="flex items-center gap-2 text-base font-medium" [class.text-muted]="project().archived">
+    <app-marker [color]="color()" />
+    {{ project().name }}
+  </h2>
+  <button
+    type="button"
+    class="flex size-9 items-center justify-center rounded-full text-muted transition-colors duration-150 hover:bg-raised hover:text-ink"
+    [attr.aria-label]="'projects.rename' | translate: { name: project().name }"
+    [title]="'projects.rename' | translate: { name: project().name }"
+    (click)="startRename()">
+    <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+  </button>
+  <button
+    type="button"
+    class="ml-auto flex h-9 items-center gap-1 rounded-full px-4 text-muted transition-colors duration-150 hover:bg-raised hover:text-ink disabled:opacity-60"
+    [disabled]="busy()"
+    (click)="setArchived(!project().archived)">
+    <span class="material-symbols-outlined" aria-hidden="true">{{ project().archived ? 'unarchive' : 'archive' }}</span>
+    {{ (project().archived ? 'projects.restore' : 'projects.archive') | translate }}
+  </button>
+  }
+</div>
+
+@if (!project().archived) {
+<fieldset class="mt-4 flex flex-wrap items-center gap-1">
+  <legend class="sr-only">{{ 'projects.color' | translate }}</legend>
+  <span class="mr-2 text-xs text-muted" aria-hidden="true">{{ 'projects.color' | translate }}</span>
+  @for (option of colors; track option) {
+  <label
+    class="flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors duration-150 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent"
+    [class.border-accent]="color() === option"
+    [class.bg-accent-soft]="color() === option"
+    [class.border-transparent]="color() !== option"
+    [class.hover:bg-raised]="color() !== option">
+    <input
+      type="radio"
+      class="sr-only"
+      [name]="'color-' + project().id"
+      [value]="option"
+      [checked]="color() === option"
+      [attr.aria-label]="'projects.colors.' + option | translate"
+      (change)="setColor(option)" />
+    <app-marker [color]="option" />
+  </label>
+  }
+</fieldset>
+
+<h3 class="mt-6 text-xs font-medium text-muted">{{ 'projects.tasks' | translate }}</h3>
+<ul class="mt-2 divide-y divide-line border-y border-line">
+  @for (task of activeTasks(); track task.id) {
+  <li class="py-2">
+    @if (taskForm() === task.id) {
+    <app-task-form
+      [projectId]="project().id"
+      [tasks]="tasks()"
+      [task]="task"
+      [busy]="busy()"
+      (saved)="saveTask($event)"
+      (cancelled)="taskForm.set(null)" />
+    } @else {
+    <div class="flex min-h-10 flex-wrap items-center gap-x-4 gap-y-1 px-2">
+      <span class="min-w-40 flex-1">{{ task.name }}</span>
+      <span class="text-muted tabular-nums">
+        @if (task.defaultHours; as hours) { {{ clock(hours.start) }}–{{ clock(hours.end) }} } @else { {{ 'projects.task.noDefault' |
+        translate }} }
+      </span>
+      <button
+        type="button"
+        class="flex size-9 items-center justify-center rounded-full text-muted transition-colors duration-150 hover:bg-raised hover:text-ink"
+        [attr.aria-label]="'projects.task.edit' | translate: { name: task.name }"
+        [title]="'projects.task.edit' | translate: { name: task.name }"
+        (click)="taskForm.set(task.id)">
+        <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+      </button>
+      <button
+        type="button"
+        class="flex size-9 items-center justify-center rounded-full text-muted transition-colors duration-150 hover:bg-raised hover:text-ink"
+        [attr.aria-label]="'projects.task.archive' | translate: { name: task.name }"
+        [title]="'projects.task.archive' | translate: { name: task.name }"
+        [disabled]="busy()"
+        (click)="setTaskArchived(task, true)">
+        <span class="material-symbols-outlined" aria-hidden="true">archive</span>
+      </button>
+    </div>
+    }
+  </li>
+  } @empty {
+  <li class="px-2 py-3 text-muted">{{ 'projects.task.none' | translate }}</li>
+  }
+</ul>
+
+@if (taskForm() === 'new') {
+<app-task-form
+  class="mt-3"
+  [projectId]="project().id"
+  [tasks]="tasks()"
+  [busy]="busy()"
+  (saved)="saveTask($event)"
+  (cancelled)="taskForm.set(null)" />
+} @else {
+<div class="mt-3 flex flex-wrap gap-2">
+  <button
+    type="button"
+    class="flex h-9 items-center gap-1 rounded-full bg-raised px-4 transition-colors duration-150 hover:bg-line"
+    (click)="taskForm.set('new')">
+    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+    {{ 'projects.task.add' | translate }}
+  </button>
+  @if (archivedTasks().length) {
+  <button
+    type="button"
+    class="h-9 rounded-full px-4 text-muted transition-colors duration-150 hover:bg-raised hover:text-ink"
+    [attr.aria-expanded]="showArchivedTasks()"
+    (click)="showArchivedTasks.set(!showArchivedTasks())">
+    {{ 'projects.task.archivedCount' | translate: { count: archivedTasks().length } }}
+  </button>
+  }
+</div>
+} @if (showArchivedTasks()) {
+<ul class="mt-2 divide-y divide-line">
+  @for (task of archivedTasks(); track task.id) {
+  <li class="flex min-h-10 items-center gap-4 px-2 text-muted">
+    <span class="flex-1">{{ task.name }}</span>
+    <button
+      type="button"
+      class="flex h-9 items-center gap-1 rounded-full px-3 transition-colors duration-150 hover:bg-raised hover:text-ink"
+      [disabled]="busy()"
+      (click)="setTaskArchived(task, false)">
+      <span class="material-symbols-outlined" aria-hidden="true">unarchive</span>
+      {{ 'projects.restore' | translate }}
+    </button>
+  </li>
+  }
+</ul>
+} } @if (error(); as key) {
+<p class="mt-3 text-danger" role="alert">{{ key | translate }}</p>
+}

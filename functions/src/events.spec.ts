@@ -74,6 +74,47 @@ describe('applyEvent: start', () => {
   });
 });
 
+describe('applyEvent: start carries the previous project and task', () => {
+  const closed = (id: string, date: string, from: string, to: string, type: 'work' | 'break' = 'work') =>
+    ({ id, start: cph(date, from), end: cph(date, to), type, source: 'hook' }) as const;
+  const taskEntry = (date: string, projectId: string | null, taskId: string | null, periods: TimeEntry['periods']): TimeEntry => ({
+    ...entry(date, periods, projectId),
+    id: timeEntryId(date as TimeEntry['date'], projectId, taskId),
+    taskId,
+  });
+
+  it('puts the new period, as its own period, in the entry of the most recent work period', () => {
+    const acmeApi = taskEntry('2026-11-05', 'acme', 'api', [closed('p1', '2026-11-05', '08:00', '11:45')]);
+    const at = cph('2026-11-05', '12:15');
+    const { writes } = applyEvent([acmeApi], event('start', at, 'ev-next'), now);
+    expect(writes).toHaveLength(1);
+    expect(writes[0]).toMatchObject({ id: '2026-11-05_acme_api', projectId: 'acme', taskId: 'api' });
+    expect(writes[0].periods.map(p => p.id)).toEqual(['p1', 'ev-next']);
+    expect(writes[0].periods[1]).toEqual({ id: 'ev-next', start: at, end: null, type: 'work', source: 'hook' });
+  });
+
+  it('carries over from an earlier day (e.g. Monday continues Friday)', () => {
+    const friday = taskEntry('2026-11-06', 'acme', null, [closed('fri', '2026-11-06', '09:00', '16:00')]);
+    const { writes } = applyEvent([friday], event('start', cph('2026-11-09', '08:30'), 'mon'), now);
+    expect(writes[0]).toMatchObject({ id: '2026-11-09_acme_', date: '2026-11-09', projectId: 'acme', taskId: null });
+  });
+
+  it('uses the latest work period, skipping breaks, and the most recent one wins', () => {
+    const older = taskEntry('2026-11-05', 'old', null, [closed('o', '2026-11-05', '08:00', '09:00')]);
+    const newer = taskEntry('2026-11-05', 'acme', 'api', [closed('n', '2026-11-05', '09:00', '10:00')]);
+    const breakEntry = taskEntry('2026-11-05', 'other', null, [closed('b', '2026-11-05', '10:00', '10:30', 'break')]);
+    const { writes } = applyEvent([older, newer, breakEntry], event('start', cph('2026-11-05', '10:30'), 'x'), now);
+    expect(writes[0].id).toBe('2026-11-05_acme_api');
+  });
+
+  it('stays unassigned when the previous work period was unassigned', () => {
+    const acme = taskEntry('2026-11-05', 'acme', null, [closed('a', '2026-11-05', '08:00', '09:00')]);
+    const loose = taskEntry('2026-11-05', null, null, [closed('u', '2026-11-05', '09:00', '10:00')]);
+    const { writes } = applyEvent([acme, loose], event('start', cph('2026-11-05', '10:30'), 'x'), now);
+    expect(writes[0].id).toBe('2026-11-05__');
+  });
+});
+
 describe('applyEvent: stop', () => {
   it('closes the running period, wherever it was moved', () => {
     const assigned = entry('2026-11-05', [running('p1', cph('2026-11-05', '08:00'))], 'acme');

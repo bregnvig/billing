@@ -1,5 +1,5 @@
 import { DocumentData, FirestoreDataConverter, QueryDocumentSnapshot, SnapshotOptions, Timestamp } from 'firebase/firestore';
-import { Device, Period, Project, Task, TimeEntry } from '@loopme/model';
+import { DefaultHours, Device, Period, Project, Task, TimeEntry } from '@loopme/model';
 
 const toTimestamp = (d: Date | null) => (d ? Timestamp.fromDate(d) : null);
 const toDate = (t: unknown) => (t instanceof Timestamp ? t.toDate() : null);
@@ -35,11 +35,15 @@ export const taskConverter: FirestoreDataConverter<Task> = {
       id: snapshot.id,
       projectId: data['projectId'],
       name: data['name'],
+      defaultHours: isDefaultHours(data['defaultHours']) ? data['defaultHours'] : null,
       archived: data['archived'] ?? false,
       ...auditFromFirestore(data),
     };
   },
 };
+
+const isDefaultHours = (v: unknown): v is DefaultHours =>
+  !!v && typeof (v as DefaultHours).start === 'number' && typeof (v as DefaultHours).end === 'number';
 
 export const periodToFirestore = (p: Period): DocumentData => ({
   id: p.id,

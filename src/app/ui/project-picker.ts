@@ -1,6 +1,7 @@
 import { afterNextRender, Component, computed, ElementRef, inject, input, output, signal, viewChild } from '@angular/core';
 import { Assignment, Project, ProjectColor, Task } from '@loopme/model';
 import { TranslatePipe } from '@ngx-translate/core';
+import { formatClock } from './clock-time';
 import { Marker, PROJECT_COLORS } from './marker';
 
 export type PickerOption =
@@ -44,7 +45,13 @@ export const pickerOptions = (
 @Component({
   selector: 'app-project-picker',
   imports: [Marker, TranslatePipe],
-  host: { class: 'block rounded-lg border border-accent bg-surface p-2' },
+  host: {
+    class: 'block bg-surface',
+    '[class.rounded-lg]': 'framed()',
+    '[class.border]': 'framed()',
+    '[class.border-accent]': 'framed()',
+    '[class.p-2]': 'framed()',
+  },
   template: `
     <input
       #search
@@ -84,6 +91,9 @@ export const pickerOptions = (
               <app-marker [color]="option.color" />
               <span class="text-muted">{{ option.project.name }} /</span>
               {{ option.task.name }}
+              @if (option.task.defaultHours; as hours) {
+                <span class="ml-auto text-xs text-muted tabular-nums">{{ clock(hours.start) }}–{{ clock(hours.end) }}</span>
+              }
             }
             @case ('create') {
               <span class="material-symbols-outlined text-accent" aria-hidden="true">add</span>
@@ -101,9 +111,12 @@ export class ProjectPicker {
   readonly projects = input.required<Project[]>();
   readonly tasks = input.required<Task[]>();
   readonly allowUnassign = input(true);
+  /** Draw its own accent frame (off when it sits inside another panel, e.g. a popover). */
+  readonly framed = input(true);
   readonly picked = output<PickerResult>();
   readonly cancelled = output<void>();
 
+  protected readonly clock = formatClock;
   protected readonly listId = `picker-${Math.random().toString(36).slice(2, 8)}`;
   protected readonly query = signal('');
   protected readonly active = signal(0);

@@ -19,8 +19,10 @@ const byStart = (a: Period, b: Period) => a.start.getTime() - b.start.getTime();
 /**
  * Applies one event to the entries of the last `LOOKBACK_DAYS` days (up to the event's day).
  *
- * - start: opens a running work period in the day's unassigned entry, unless one is already
- *   running today. A running period left over from an earlier day (missed stop, e.g. power
+ * - start: opens a new running work period, unless one is already running today. It's its own
+ *   period (own start/stop), but goes into the entry of the same project + task as the most
+ *   recent work period (within LOOKBACK_DAYS), since you're most likely continuing that work.
+ *   With no previous work period, or an unassigned one, it lands in the day's unassigned entry. A running period left over from an earlier day (missed stop, e.g. power
  *   loss) is closed at the end of its own day first, so it stands out for correction.
  * - stop: closes the running period. If it started yesterday (working past midnight), it's
  *   split at local midnight so each day's entry only holds that day's time. If it started
@@ -83,6 +85,11 @@ export const applyEvent = (entries: TimeEntry[], event: HookEvent, now: Date): O
     }
   };
 
+  /** The entry of the most recently started work period, for carrying its project/task over. */
+  const previous = [...all.values()]
+    .flatMap(entry => entry.periods.filter(p => p.type === 'work' && p.start <= event.at).map(period => ({ entry, period })))
+    .sort((a, b) => byStart(b.period, a.period))[0]?.entry;
+
   if (event.type === 'start') {
     if (running) {
       if (running.entry.date === today) return { result: 'already-running', writes: [] };
@@ -90,15 +97,15 @@ export const applyEvent = (entries: TimeEntry[], event: HookEvent, now: Date): O
       running.period.end = endOfItsDay;
       touch(running.entry);
     }
-    const unassigned = entryFor(today, null, null);
-    unassigned.periods.push({
+    const target = entryFor(today, previous?.projectId ?? null, previous?.taskId ?? null);
+    target.periods.push({
       id: event.eventId,
       start: event.at,
       end: null,
       type: 'work',
       source: 'hook',
     });
-    touch(unassigned);
+    touch(target);
     return { result: 'started', writes: [...changed.values()] };
   }
 

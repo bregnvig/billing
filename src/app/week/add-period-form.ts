@@ -52,6 +52,20 @@ export class AddPeriodForm {
     });
   });
 
+  /** Set on the first save attempt: "required" errors only show from then on. */
+  protected readonly submitted = signal(false);
+
+  /**
+   * Error to show for a field (translation key). Format/order errors show once you leave the field;
+   * "required" only after a save attempt, so choosing a task first (which fills in the times) isn't nagged.
+   */
+  protected readonly errorFor = (field: 'start' | 'end'): string | null => {
+    const state = this.times[field]();
+    const error = state.errors()[0];
+    if (!error) return null;
+    return this.submitted() || (state.touched() && error.kind !== 'required') ? (error.message ?? null) : null;
+  };
+
   protected readonly type = signal<PeriodType>('work');
   protected readonly project = signal<PickerResult | null>(null);
   protected readonly pickingProject = signal(false);
@@ -102,10 +116,15 @@ export class AddPeriodForm {
   protected readonly pickProject = (result: PickerResult): void => {
     this.project.set('assign' in result && result.assign.projectId === null ? null : result);
     this.pickingProject.set(false);
+    // A task's default hours fill in the times, unless you've already typed some.
+    const hours = 'assign' in result ? this.tasks().find(t => t.id === result.assign.taskId)?.defaultHours : null;
+    const { start, end } = this.#model();
+    if (hours && !start && !end) this.#model.set({ start: formatClock(hours.start), end: formatClock(hours.end) });
   };
 
   protected readonly submit = (event: Event): void => {
     event.preventDefault();
+    this.submitted.set(true);
     this.times.start().markAsTouched();
     this.times.end().markAsTouched();
     const range = this.#range();

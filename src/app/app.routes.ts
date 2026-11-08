@@ -18,6 +18,7 @@ export const routes: Routes = [
         loadComponent: () => import('./overview/overview.page').then(m => m.OverviewPage),
       },
       { path: 'week', loadComponent: () => import('./week/week.page').then(m => m.WeekPage) },
+      { path: 'projects', loadComponent: () => import('./projects/projects.page').then(m => m.ProjectsPage) },
       {
         path: 'settings',
         loadComponent: () => import('./settings/settings.page').then(m => m.SettingsPage),

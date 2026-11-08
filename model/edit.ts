@@ -104,3 +104,30 @@ export const removePeriod = (entry: TimeEntry, periodId: string, now: Date): Tim
 /** Periods that overlap [start, end). Running periods are treated as lasting until `now`. */
 export const overlapping = <T extends Pick<Period, 'start' | 'end'>>(periods: readonly T[], start: Date, end: Date, now: Date): T[] =>
   periods.filter(p => p.start < end && (p.end ?? now) > start);
+
+/** Changes a period's type (work ↔ break). Returns the updated entry, or null if not found. */
+export const setPeriodType = (entry: TimeEntry, periodId: string, type: Period['type'], now: Date): TimeEntry | null => {
+  if (!entry.periods.some(p => p.id === periodId)) return null;
+  return { ...structuredClone(entry), periods: entry.periods.map(p => (p.id === periodId ? { ...p, type } : p)), updatedAt: now };
+};
+
+export interface Gap {
+  start: Date;
+  end: Date;
+}
+
+/**
+ * Unrecorded time between a day's periods (e.g. the screen was locked over lunch), at least
+ * `minMs` long. Only gaps *between* periods count: not before the first or after the last.
+ * Overlapping periods are merged first; running periods last until `now`.
+ */
+export const gapsBetween = (periods: readonly Pick<Period, 'start' | 'end'>[], now: Date, minMs = 60_000): Gap[] => {
+  const spans = periods.map(p => ({ start: p.start.getTime(), end: (p.end ?? now).getTime() })).sort((a, b) => a.start - b.start);
+  const gaps: Gap[] = [];
+  let reach = spans[0]?.end ?? 0;
+  for (const span of spans.slice(1)) {
+    if (span.start - reach >= minMs) gaps.push({ start: new Date(reach), end: new Date(span.start) });
+    reach = Math.max(reach, span.end);
+  }
+  return gaps;
+};

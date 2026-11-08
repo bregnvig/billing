@@ -53,7 +53,11 @@
       "daysWithTime_other": "{{count}} dage med tid",
       "perDay": "{{duration}} pr. dag",
       "summary": "{{worked}} arbejdet i {{month}} indtil nu, mod {{previous}} på samme tid i {{previousMonth}}."
-    }
+    },
+    "assignUnassigned": "Tildel {{duration}} ikke tildelt tid",
+    "assignTitle": "Tildel dagens ikke tildelte tid",
+    "assignHint": "Tildel {{count}} ikke tildelte periode(r) fra i dag ({{duration}}) til:",
+    "openInWeek": "Åbn i ugevisning"
   },
   "timeline": {
     "periods": "{{count}} perioder",
@@ -129,7 +133,7 @@
     "next": "Næste uge",
     "today": "I dag",
     "worked": "{{duration}} arbejdet",
-    "shortcuts": "Taster: ← → skift uge · T i dag · Enter eller A på en periode for at tildele den",
+    "shortcuts": "Taster: ← → skift uge · T i dag · på en periode: Enter eller A tildel · B pause/arbejde · Delete slet",
     "assignAll": "Tildel alle ikke tildelte ({{count}})",
     "noTime": "Ingen tid registreret.",
     "now": "nu",
@@ -141,10 +145,22 @@
     "errors": {
       "assign": "Kunne ikke tildele. Tjek forbindelsen, og prøv igen.",
       "undo": "Kunne ikke fortryde. Tildel perioden igen manuelt.",
-      "add": "Kunne ikke tilføje perioden. Tjek forbindelsen, og prøv igen."
+      "add": "Kunne ikke tilføje perioden. Tjek forbindelsen, og prøv igen.",
+      "save": "Kunne ikke gemme. Tjek forbindelsen, og prøv igen."
     },
     "addPeriod": "Tilføj periode",
-    "added": "Periode {{start}}–{{end}} tilføjet"
+    "added": "Periode {{start}}–{{end}} tilføjet",
+    "gap": "Ikke registreret",
+    "countAsWork": "Tæl som arbejde",
+    "markAsBreak": "Markér som pause",
+    "countGapAria": "Tæl {{start}}–{{end}} som arbejde",
+    "countAsWorkAria": "Tæl pausen fra {{start}} som arbejde",
+    "markAsBreakAria": "Markér perioden fra {{start}} som pause",
+    "countedAsWork": "{{start}}–{{end}} talt som arbejde",
+    "markedAsBreak": "{{start}}–{{end}} markeret som pause",
+    "delete": "Slet",
+    "deleteAria": "Slet perioden {{start}}–{{end}}",
+    "deleted": "Periode {{start}}–{{end}} slettet"
   },
   "picker": {
     "search": "Søg i projekter",
@@ -177,6 +193,61 @@
       "format": "Brug et tidspunkt som 08:30 eller 830.",
       "endBeforeStart": "Slut skal være efter start.",
       "future": "Kan ikke ligge i fremtiden."
+    }
+  },
+  "projects": {
+    "title": "Projekter",
+    "description": "Projekter og deres valgfrie opgaver. En opgave kan have standardtider, der udfylder nye manuelle perioder.",
+    "newName": "Nyt projekt",
+    "newPlaceholder": "f.eks. Acme-website",
+    "create": "Opret projekt",
+    "creating": "Opretter…",
+    "none": "Ingen projekter endnu. Opret et ovenfor eller fra ugevisningen, når du tildeler tid.",
+    "name": "Projektnavn",
+    "rename": "Omdøb {{name}}",
+    "save": "Gem",
+    "cancel": "Annuller",
+    "archive": "Arkivér",
+    "restore": "Gendan",
+    "archivedCount": "Arkiverede projekter ({{count}})",
+    "archivedToast": "{{name}} arkiveret",
+    "restoredToast": "{{name}} gendannet",
+    "color": "Farve",
+    "colors": {
+      "blue": "Blå",
+      "orange": "Orange",
+      "pink": "Lyserød",
+      "brown": "Brun",
+      "green": "Grøn",
+      "purple": "Lilla",
+      "yellow": "Gul",
+      "red": "Rød"
+    },
+    "tasks": "Opgaver",
+    "task": {
+      "name": "Opgavenavn",
+      "defaultStart": "Standardstart",
+      "defaultEnd": "Standardslut",
+      "defaultHint": "Standardtider er valgfrie. De udfylder tiderne, når du tilføjer en periode for opgaven.",
+      "add": "Tilføj opgave",
+      "edit": "Redigér {{name}}",
+      "archive": "Arkivér {{name}}",
+      "none": "Ingen opgaver. Tid kan registreres direkte på projektet.",
+      "noDefault": "Ingen standardtider",
+      "archivedCount": "Arkiverede opgaver ({{count}})"
+    },
+    "errors": {
+      "name": {
+        "required": "Angiv et navn.",
+        "tooLong": "Brug højst 60 tegn.",
+        "duplicate": "Navnet er allerede brugt."
+      },
+      "format": "Brug et tidspunkt som 08:00 eller 800.",
+      "hours": {
+        "incomplete": "Angiv både standardstart og -slut, eller ingen af dem.",
+        "endBeforeStart": "Standardslut skal være efter start."
+      },
+      "save": "Kunne ikke gemme. Tjek forbindelsen, og prøv igen."
     }
   }
 }

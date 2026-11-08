@@ -1,13 +1,15 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   addDays,
   Assignment,
   dailyTotals,
   datesBetween,
+  gapsBetween,
   IsoDate,
   isoWeek,
   PeriodRef,
+  PeriodType,
   ProjectColor,
   startOfWeek,
   toIsoDate,
@@ -34,12 +36,27 @@ const dayStart = (date: IsoDate): Date => {
 const isIsoDate = (value: string | undefined): value is IsoDate => !!value && /^\d{4}-\d{2}-\d{2}$/.test(value);
 
 export interface PeriodRow extends TimelinePeriod {
+  kind: 'period';
   ref: PeriodRef;
   /** `null` = unassigned. */
   projectId: string | null;
+  taskId: string | null;
   durationMs: number;
   startText: string;
   endText: string | null;
+}
+
+/** Unrecorded time between periods (locked, asleep, away): can be counted as work. */
+export interface GapRow {
+  kind: 'gap';
+  id: string;
+  start: Date;
+  end: Date;
+  durationMs: number;
+  startText: string;
+  endText: string;
+  /** Project/task of the period before the gap: what you were most likely working on. */
+  assignment: Assignment;
 }
 
 /** What the picker is open for: one period, or all unassigned periods of a day. */
@@ -53,11 +70,14 @@ interface Editing {
   selector: 'app-week-page',
   imports: [TranslatePipe, DayTimeline, Marker, ProjectPicker, AddPeriodForm],
   templateUrl: './week.page.html',
+  styleUrl: './week.page.scss',
   host: { '(document:keydown)': 'onKeydown($event)' },
 })
 export class WeekPage {
   /** Monday of the week to show (`?w=2026-11-02`); defaults to this week. */
   readonly w = input<string>();
+  /** `?assign=<date>`: open the picker for that day's unassigned periods (e.g. from the overview badge). */
+  readonly assign = input<string>();
 
   readonly #router = inject(Router);
   readonly #entriesService = inject(TimeEntriesService);
@@ -82,6 +102,23 @@ export class WeekPage {
   protected readonly isThisWeek = computed(() => this.weekStart() === startOfWeek(this.#today()));
 
   protected readonly editing = signal<Editing | null>(null);
+
+  constructor() {
+    // Handle ?assign=<date> once the day's periods are loaded, then drop it from the URL so
+    // going back or reloading doesn't reopen the picker.
+    effect(() => {
+      const date = this.assign();
+      if (!date || !this.loaded()) return;
+      untracked(() => {
+        const day = this.days().find(d => d.date === date);
+        if (day?.unassignedRefs.length) {
+          const single = day.unassignedRefs.length === 1;
+          this.openPicker(single ? day.unassignedRefs[0].periodId : `all-${date}`, day.unassignedRefs);
+        }
+        void this.#router.navigate([], { queryParams: { assign: null }, queryParamsHandling: 'merge', replaceUrl: true });
+      });
+    });
+  }
   protected readonly busy = signal(false);
   /** Translation key of the last failed action. */
   protected readonly actionError = signal<string | null>(null);
@@ -121,12 +158,14 @@ export class WeekPage {
               const project = entry.projectId ? projects.get(entry.projectId) : undefined;
               const task = entry.taskId ? tasks.get(entry.taskId) : undefined;
               return entry.periods.map(period => ({
+                kind: 'period' as const,
                 id: period.id,
                 ref: { entryId: entry.id, periodId: period.id },
                 start: period.start,
                 end: period.end,
                 type: period.type,
                 projectId: entry.projectId,
+                taskId: entry.taskId,
                 color: project?.color ?? null,
                 label: project ? (task ? `${project.name} / ${task}` : project.name) : null,
                 labelKey: project ? null : entry.projectId ? 'timeline.unknownProject' : 'timeline.unassigned',
@@ -136,6 +175,19 @@ export class WeekPage {
               }));
             })
             .sort((a, b) => a.start.getTime() - b.start.getTime());
+          const gaps: GapRow[] = gapsBetween(rows, this.now()).map(gap => {
+            const before = rows.filter(r => r.start < gap.start && r.type === 'work').at(-1);
+            return {
+              kind: 'gap',
+              id: `gap-${gap.start.getTime()}`,
+              ...gap,
+              durationMs: gap.end.getTime() - gap.start.getTime(),
+              startText: formatTime(gap.start),
+              endText: formatTime(gap.end),
+              assignment: { projectId: before?.projectId ?? null, taskId: before?.taskId ?? null },
+            };
+          });
+          const items: (PeriodRow | GapRow)[] = [...rows, ...gaps].sort((a, b) => a.start.getTime() - b.start.getTime());
           const total = this.#totals().get(date);
           return {
             date,
@@ -146,6 +198,7 @@ export class WeekPage {
             work: total?.work ?? 0,
             unassigned: total?.unassigned ?? 0,
             rows,
+            items,
             unassignedRefs: rows.filter(r => r.projectId === null && r.type === 'work').map(r => r.ref),
           };
         })
@@ -234,6 +287,62 @@ export class WeekPage {
     }
   };
 
+  /** Switches a period between work and break, with Undo. */
+  protected readonly toggleType = async (row: PeriodRow): Promise<void> => {
+    const type: PeriodType = row.type === 'break' ? 'work' : 'break';
+    await this.#withUndo(
+      () => this.#entriesService.setPeriodType(row.ref, type),
+      type === 'work' ? 'weekView.countedAsWork' : 'weekView.markedAsBreak',
+      {
+        start: row.startText,
+        end: row.endText ?? formatTime(this.now()),
+      },
+    );
+  };
+
+  /** Deletes a period (Undo puts it back exactly) and moves focus to the next period row. */
+  protected readonly deleteRow = async (row: PeriodRow): Promise<void> => {
+    const rowIds = this.days().flatMap(d => d.rows.map(r => r.id));
+    const next = rowIds[rowIds.indexOf(row.id) + 1] ?? rowIds[rowIds.indexOf(row.id) - 1];
+    if (this.editing()?.key === row.id) this.editing.set(null);
+    await this.#withUndo(() => this.#entriesService.deletePeriod(row.ref), 'weekView.deleted', {
+      start: row.startText,
+      end: row.endText ?? formatTime(this.now()),
+    });
+    if (next) setTimeout(() => document.getElementById(next)?.focus());
+  };
+
+  /** Turns unrecorded time into a work period (on the project you were on before it), with Undo. */
+  protected readonly countGapAsWork = (date: IsoDate, gap: GapRow): Promise<void> =>
+    this.#withUndo(
+      () => this.#entriesService.addPeriod(date, gap.assignment, { start: gap.start, end: gap.end, type: 'work' }),
+      'weekView.countedAsWork',
+      { start: gap.startText, end: gap.endText },
+    );
+
+  readonly #withUndo = async (
+    action: () => Promise<() => Promise<unknown>>,
+    message: string,
+    params: Record<string, unknown>,
+  ): Promise<void> => {
+    if (this.busy()) return;
+    this.busy.set(true);
+    this.actionError.set(null);
+    try {
+      const undo = await action();
+      this.#toasts.show({
+        message,
+        params,
+        actionLabel: 'weekView.undo',
+        action: () => undo().catch(() => this.actionError.set('weekView.errors.undo')),
+      });
+    } catch {
+      this.actionError.set('weekView.errors.save');
+    } finally {
+      this.busy.set(false);
+    }
+  };
+
   /** ←/→ change week, T = today (ignored while typing or with modifiers). */
   protected readonly onKeydown = (event: KeyboardEvent): void => {
     const target = event.target as HTMLElement;
@@ -245,12 +354,15 @@ export class WeekPage {
     event.preventDefault();
   };
 
-  /** A = assign the focused period. */
+  /** A = assign the focused period, B = switch it between break and work, Delete/Backspace = delete it. */
   protected readonly onRowKeydown = (event: KeyboardEvent, row: PeriodRow): void => {
-    if ((event.key === 'a' || event.key === 'A') && !event.ctrlKey && !event.metaKey && !event.altKey) {
-      event.preventDefault();
-      event.stopPropagation();
-      this.openPicker(row.id, [row.ref]);
-    }
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    const key = event.key.toLowerCase();
+    if (key === 'a') this.openPicker(row.id, [row.ref]);
+    else if (key === 'b') void this.toggleType(row);
+    else if (key === 'delete' || key === 'backspace') void this.deleteRow(row);
+    else return;
+    event.preventDefault();
+    event.stopPropagation();
   };
 }

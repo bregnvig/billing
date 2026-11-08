@@ -25,11 +25,19 @@ export interface Project {
   updatedAt: Date;
 }
 
+/** A default time range, in minutes since local midnight (e.g. 480-960 = 08:00-16:00). */
+export interface DefaultHours {
+  start: number;
+  end: number;
+}
+
 /** Optional subdivision of a project. */
 export interface Task {
   id: string;
   projectId: string;
   name: string;
+  /** Pre-fills new manual periods for this task; `null` = none. */
+  defaultHours: DefaultHours | null;
   archived: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -64,8 +72,8 @@ export interface TimeEntry {
   id: string;
   date: IsoDate;
   /**
-   * `null` means "not yet assigned": OS hooks only know that work started/stopped,
-   * so their periods land in the day's unassigned entry and are moved in the UI.
+   * `null` means "not yet assigned". New hook periods inherit the project/task of the most recent
+   * work period (see functions/src/events.ts); without one they land in the day's unassigned entry.
    */
   projectId: string | null;
   /** Optional; must belong to `projectId` when set. Always `null` when `projectId` is `null`. */

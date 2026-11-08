@@ -6,3 +6,4 @@ export * from './time';
 export * from './calendar';
 export * from './summary';
 export * from './edit';
+export * from './projects';

@@ -31,9 +31,49 @@
           {{ 'overview.runningSince' | translate: { time: r.since } }}
         </span>
         } @if (todayUnassigned() >= 60000) {
-        <span class="rounded-full border border-unassigned px-2 py-0.5 text-xs tabular-nums">
-          {{ 'overview.unassigned' | translate: { duration: duration(todayUnassigned()) } }}
-        </span>
+        <div class="assign-popover-anchor relative">
+          <button
+            type="button"
+            id="assign-badge"
+            class="flex items-center gap-1 rounded-full border border-unassigned py-0.5 pr-1 pl-2 text-xs tabular-nums transition-colors duration-150 hover:bg-raised"
+            aria-haspopup="dialog"
+            [attr.aria-expanded]="assignOpen()"
+            [attr.aria-label]="'overview.assignUnassigned' | translate: { duration: duration(todayUnassigned()) }"
+            [title]="'overview.assignUnassigned' | translate: { duration: duration(todayUnassigned()) }"
+            (click)="assignOpen() ? closeAssign() : assignOpen.set(true)">
+            {{ 'overview.unassigned' | translate: { duration: duration(todayUnassigned()) } }}
+            <span class="material-symbols-outlined text-base leading-none" aria-hidden="true">
+              {{ assignOpen() ? 'expand_less' : 'expand_more' }}
+            </span>
+          </button>
+          @if (assignOpen()) {
+          <div
+            role="dialog"
+            class="absolute top-full left-0 z-40 mt-2 w-80 rounded-lg border border-line bg-surface p-3 shadow-lg"
+            [attr.aria-label]="'overview.assignTitle' | translate">
+            <p class="px-1 pb-2 text-xs text-muted">
+              {{ 'overview.assignHint' | translate: { count: unassignedCount(), duration: duration(todayUnassigned()) } }}
+            </p>
+            <app-project-picker
+              [framed]="false"
+              [projects]="projectList()"
+              [tasks]="taskList()"
+              [allowUnassign]="false"
+              (picked)="assignToday($event)"
+              (cancelled)="closeAssign(true)" />
+            @if (assignError(); as key) {
+            <p class="mt-2 px-1 text-xs text-danger" role="alert">{{ key | translate }}</p>
+            }
+            <a
+              routerLink="/week"
+              [queryParams]="{ assign: today() }"
+              class="mt-2 flex items-center gap-1 rounded-full px-2 py-1 text-xs text-accent transition-colors duration-150 hover:bg-accent-soft">
+              <span class="material-symbols-outlined text-base leading-none" aria-hidden="true">calendar_view_week</span>
+              {{ 'overview.openInWeek' | translate }}
+            </a>
+          </div>
+          }
+        </div>
         }
       </div>
       } @if (todayPeriods().length) {

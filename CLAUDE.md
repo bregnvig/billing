@@ -16,7 +16,7 @@
   - Holds a list of **periods** (start/end), because the same project/task is often worked on several times a day.
   - Each period has a `type`: `work` or `break`. Breaks are recorded but don't count toward worked hours.
   - Each period has a `source`: `hook` (from the OS hooks) or `manual` (entered in the UI). All periods can be edited or deleted in the UI.
-  - Hook periods land in the day's **unassigned** entry (`projectId: null`). The hooks only know when work started and stopped, so the user moves those periods to a project/task in the UI.
+  - A new hook period is its own period (own start/stop), but goes into the entry of the **same project + task as the most recent work period** (last 7 days, breaks skipped), since you're most likely continuing that work. With no previous work period, or an unassigned one, it lands in the day's **unassigned** entry (`projectId: null`). Reassign in the week view.
   - A running period has `end: null` until a stop is reported.
 
 The **shared model** lives in `model/` and is imported as `@loopme/model` by both the web app and Cloud Functions (path in `tsconfig.json` and `functions/tsconfig.json`). It holds the types, collection names (`COLLECTIONS`), `timeEntryId()`, durations and time-zone date helpers. Plain TypeScript only, with no Angular or Firebase imports. The Firestore converters stay per side because the web and admin SDKs differ: `src/app/data/converters.ts` and `functions/src/firestore.ts`.
@@ -77,6 +77,7 @@ Collections: `projects`, `tasks`, `timeEntries` (owner read/write), `devices`, `
 - **True privates.** Use `#field` / `#method = () => …` for anything private, never the `private` keyword.
   - Exception: members used in a **template** can't be `#private` (templates can't see them). Make those `protected`.
   - Exception: Angular's signal queries and inputs/outputs (`viewChild()`, `contentChild()`, `input()`, `output()`, `model()`) can't be `#private` either (NG1053). Make queries `protected`; inputs/outputs are public.
+- **Forms**: always `<form novalidate>`. Signal forms add native `required` attributes, and without `novalidate` the browser blocks submit before Angular sees it, so our own error messages never show. Show "required" errors only after a save attempt; format errors once a field is left.
 - Prefer `inject()` over constructor parameters, so services end up as `readonly #db = inject(FIRESTORE)`.
 
 ## Commands

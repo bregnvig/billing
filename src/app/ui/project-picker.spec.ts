@@ -13,6 +13,7 @@ const task = (id: string, projectId: string, name: string): Task => ({
   id,
   projectId,
   name,
+  defaultHours: null,
   archived: false,
   createdAt: new Date(0),
   updatedAt: new Date(0),

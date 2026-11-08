@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addPeriod, entryIdsForMove, movePeriods, overlapping, removePeriod } from './edit';
+import { addPeriod, entryIdsForMove, gapsBetween, movePeriods, overlapping, removePeriod, setPeriodType } from './edit';
 import type { Period, TimeEntry } from './entities';
 
 const now = new Date('2026-11-08T12:00:00Z');
@@ -102,5 +102,32 @@ describe('addPeriod / removePeriod / overlapping', () => {
     const running = [p('r', 10, null)]; // running since 10:00; now is 12:00
     expect(overlapping(running, at(11), at(12), now).map(x => x.id)).toEqual(['r']);
     expect(overlapping(running, at(13), at(14), now).map(x => x.id)).toEqual([]);
+  });
+});
+
+describe('setPeriodType / gapsBetween', () => {
+  it('switches a period between work and break', () => {
+    const updated = setPeriodType(unassigned, 'b', 'break', now)!;
+    expect(updated.periods.find(x => x.id === 'b')?.type).toBe('break');
+    expect(updated.periods.find(x => x.id === 'a')?.type).toBe('work');
+    expect(unassigned.periods.find(x => x.id === 'b')?.type).toBe('work');
+    expect(setPeriodType(unassigned, 'nope', 'break', now)).toBeNull();
+  });
+
+  it('finds gaps between periods only, merging overlaps and skipping short ones', () => {
+    const at = (hhmm: string) => new Date(`2026-11-08T${hhmm}:00Z`);
+    const span = (s: string, e: string | null) => ({ start: at(s), end: e ? at(e) : null });
+    const gaps = gapsBetween(
+      [span('12:30', '13:00'), span('08:00', '10:00'), span('09:30', '11:00'), span('11:00:30'.slice(0, 5), '12:00')],
+      at('14:00'),
+    );
+    expect(gaps.map(g => [g.start.toISOString().slice(11, 16), g.end.toISOString().slice(11, 16)])).toEqual([['12:00', '12:30']]);
+    // a running last period counts until now, but nothing after it is a gap
+    expect(gapsBetween([span('08:00', '09:00'), span('10:00', null)], at('11:00')).length).toBe(1);
+    expect(gapsBetween([span('08:00', '09:00')], at('11:00'))).toEqual([]);
+    // gaps shorter than a minute are ignored
+    expect(
+      gapsBetween([span('08:00', '09:00'), { start: new Date(at('09:00').getTime() + 30_000), end: at('10:00') }], at('11:00')),
+    ).toEqual([]);
   });
 });

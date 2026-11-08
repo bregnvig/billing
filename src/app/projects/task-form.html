@@ -1,0 +1,61 @@
+<form novalidate class="rounded-lg border border-accent bg-surface p-4" (submit)="submit($event)" (keydown)="onKeydown($event)">
+  <!-- Bottom-aligned row, errors on their own line (same pattern as the add-period form). -->
+  <div class="flex flex-wrap items-end gap-3">
+    <div class="min-w-48 flex-1">
+      <label [for]="'task-name-' + projectId()" class="block text-xs font-medium text-muted">{{ 'projects.task.name' | translate }}</label>
+      <input
+        #nameInput
+        [id]="'task-name-' + projectId()"
+        class="mt-1 h-10 w-full rounded-md border border-line bg-surface px-3 outline-none focus:border-2 focus:border-accent"
+        autocomplete="off"
+        [formField]="fields.name"
+        [attr.aria-invalid]="fields.name().touched() && fields.name().invalid()" />
+    </div>
+    <div class="w-28">
+      <label [for]="'task-start-' + projectId()" class="block text-xs font-medium text-muted">
+        {{ 'projects.task.defaultStart' | translate }}
+      </label>
+      <input
+        [id]="'task-start-' + projectId()"
+        class="mt-1 h-10 w-full rounded-md border border-line bg-surface px-3 tabular-nums outline-none focus:border-2 focus:border-accent"
+        placeholder="08:00"
+        inputmode="numeric"
+        autocomplete="off"
+        [formField]="fields.start"
+        (blur)="normalize('start')" />
+    </div>
+    <div class="w-28">
+      <label [for]="'task-end-' + projectId()" class="block text-xs font-medium text-muted">
+        {{ 'projects.task.defaultEnd' | translate }}
+      </label>
+      <input
+        [id]="'task-end-' + projectId()"
+        class="mt-1 h-10 w-full rounded-md border border-line bg-surface px-3 tabular-nums outline-none focus:border-2 focus:border-accent"
+        placeholder="16:00"
+        inputmode="numeric"
+        autocomplete="off"
+        [formField]="fields.end"
+        [attr.aria-invalid]="fields.end().touched() && fields.end().invalid()"
+        (blur)="normalize('end')" />
+    </div>
+    <div class="flex gap-2">
+      <button type="button" class="h-10 rounded-full px-4 transition-colors duration-150 hover:bg-raised" (click)="cancelled.emit()">
+        {{ 'projects.cancel' | translate }}
+      </button>
+      <button
+        type="submit"
+        class="h-10 rounded-full bg-accent px-5 font-medium text-on-accent transition-opacity duration-150 hover:opacity-90 disabled:opacity-60"
+        [disabled]="busy()">
+        {{ (task() ? 'projects.save' : 'projects.task.add') | translate }}
+      </button>
+    </div>
+  </div>
+  <div class="mt-1 min-h-4 space-y-1 text-xs" role="status">
+    @if (fields.name().touched() && fields.name().errors()[0]?.message; as key) {
+    <p class="text-danger">{{ key | translate }}</p>
+    } @if (fields.end().touched() && (fields.end().errors()[0]?.message ?? fields.start().errors()[0]?.message); as key) {
+    <p class="text-danger">{{ key | translate }}</p>
+    }
+    <p class="text-muted">{{ 'projects.task.defaultHint' | translate }}</p>
+  </div>
+</form>

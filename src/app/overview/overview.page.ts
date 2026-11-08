@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import {
   addDays,
+  Assignment,
   dailyTotals,
   datesBetween,
   daysInMonth,
@@ -17,9 +18,14 @@ import {
   weekdayIndex,
   workMsBetween,
 } from '@loopme/model';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../auth/auth.service';
-import { liveEntries, liveProjects } from '../data/live';
+import { liveEntries, liveProjects, liveTasks } from '../data/live';
+import { ProjectsService } from '../data/projects.service';
+import { TimeEntriesService } from '../data/time-entries.service';
+import { PickerResult, ProjectPicker } from '../ui/project-picker';
+import { ToastService } from '../ui/toast.service';
 import { LanguageService } from '../i18n/language.service';
 import { injectNow } from '../ui/clock';
 import {
@@ -56,12 +62,16 @@ const greetingKeyFor = (hour: number): string =>
 /** Landing page: today, this week and this month at a glance. */
 @Component({
   selector: 'app-overview-page',
-  imports: [MetricCard, DayTimeline, WeekBars, LineChart, TranslatePipe],
+  imports: [MetricCard, DayTimeline, WeekBars, LineChart, TranslatePipe, RouterLink, ProjectPicker],
+  host: { '(document:pointerdown)': 'onDocumentPointerDown($event)' },
   templateUrl: './overview.page.html',
   styleUrl: './overview.page.scss',
 })
 export class OverviewPage {
   readonly #auth = inject(AuthService);
+  readonly #entriesService = inject(TimeEntriesService);
+  readonly #projectsService = inject(ProjectsService);
+  readonly #toasts = inject(ToastService);
   readonly #locale = inject(LanguageService).locale;
   protected readonly now = injectNow();
   protected readonly today = computed(() => toIsoDate(this.now()));
@@ -71,6 +81,7 @@ export class OverviewPage {
   });
   readonly #entries = liveEntries(this.#range);
   readonly #projects = liveProjects();
+  readonly #tasks = liveTasks();
 
   protected readonly error = computed(() => this.#entries.error() ?? this.#projects.error());
   protected readonly loaded = computed(() => this.#entries.value() !== null);
@@ -109,6 +120,66 @@ export class OverviewPage {
     workMsBetween(this.#list(), shiftDays(this.todayStart(), -7), shiftDays(this.now(), -7), this.now()),
   );
   protected readonly todayUnassigned = computed(() => this.#totals().get(this.today())?.unassigned ?? 0);
+
+  // --- Assign popover (from the unassigned badge) ------------------------------------------
+
+  protected readonly assignOpen = signal(false);
+  protected readonly assigning = signal(false);
+  /** Translation key of a failed assign. */
+  protected readonly assignError = signal<string | null>(null);
+  protected readonly projectList = computed(() => this.#projects.value() ?? []);
+  protected readonly taskList = computed(() => this.#tasks.value() ?? []);
+  /** Today's unassigned work periods. */
+  readonly #unassignedRefs = computed(() =>
+    this.#list()
+      .filter(e => e.date === this.today() && e.projectId === null)
+      .flatMap(e => e.periods.filter(p => p.type === 'work').map(p => ({ entryId: e.id, periodId: p.id }))),
+  );
+  protected readonly unassignedCount = computed(() => this.#unassignedRefs().length);
+
+  protected readonly closeAssign = (returnFocus = false): void => {
+    this.assignOpen.set(false);
+    this.assignError.set(null);
+    if (returnFocus) setTimeout(() => document.getElementById('assign-badge')?.focus());
+  };
+
+  /** Closes the popover on a click outside it. */
+  protected readonly onDocumentPointerDown = (event: PointerEvent): void => {
+    if (this.assignOpen() && !(event.target as HTMLElement).closest('.assign-popover-anchor')) this.closeAssign();
+  };
+
+  protected readonly assignToday = async (result: PickerResult): Promise<void> => {
+    const refs = this.#unassignedRefs();
+    if (!refs.length || this.assigning()) return;
+    this.assigning.set(true);
+    this.assignError.set(null);
+    try {
+      let target: Assignment;
+      let name: string;
+      if ('createProject' in result) {
+        const project = await this.#projectsService.createProject(result.createProject, this.projectList());
+        target = { projectId: project.id, taskId: null };
+        name = project.name;
+      } else {
+        target = result.assign;
+        const project = this.projectList().find(p => p.id === target.projectId);
+        const task = this.taskList().find(t => t.id === target.taskId);
+        name = project ? (task ? `${project.name} / ${task.name}` : project.name) : '';
+      }
+      const undo = await this.#entriesService.assign(refs, target);
+      this.closeAssign(true);
+      this.#toasts.show({
+        message: 'weekView.assignedTo',
+        params: { count: refs.length, name },
+        actionLabel: 'weekView.undo',
+        action: () => undo(),
+      });
+    } catch {
+      this.assignError.set('weekView.errors.assign');
+    } finally {
+      this.assigning.set(false);
+    }
+  };
 
   protected readonly todayPeriods = computed((): TimelinePeriod[] => {
     const colors = this.#colorOf();

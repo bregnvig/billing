@@ -170,7 +170,9 @@ Both themes are first-class. The Firebase screenshots are dark, and light follow
   2. Title `Week 45` (`text-3xl`, regular) with pill badges: `32:15 worked`, `1:20 unassigned` (amber, only from 1 minute up).
   3. **One card per day, newest first** (today at the top, accent border). Days later in the week are hidden; Sat/Sun only when they have time. Empty days are compact one-line cards.
   4. Day card: title, total, unassigned badge, `Assign all unassigned (n)` when there are several; then the day timeline and one row per period (marker + project / task, or amber ring + Unassigned; times; duration; Running badge).
-  5. Clicking a row (or Enter / `A`) opens the **project picker inline** under it: type to filter or create a project, ↑/↓, Enter, Esc. Assigning shows a toast with Undo.
+  5. **Gaps** between periods (locked, asleep, away; at least a minute) show as hatched `Not recorded` rows with `Count as work`, which adds a work period on the project of the period before it. Every period row has a Break/Work switch (also key `B`) and a Delete button (also `Delete`/`Backspace`; focus moves to the next row). All offer Undo, never a confirm dialog.
+  6. Clicking a row (or Enter / `A`) opens the **project picker inline** under it: type to filter or create a project, ↑/↓, Enter, Esc. Assigning shows a toast with Undo.
+- **Projects page** (`/projects`): a "New project" field, then one card per project: marker + name (rename inline), color swatches (marker + color), Archive/Restore with Undo, and its tasks (name, default hours `08:00–16:00`, edit, archive) plus `Add task`. Archived projects and tasks are folded away behind a count. A task's default hours pre-fill the add-period form when that task is picked and the times are empty.
 - **Responsive**:
   - Below 1024px the day cards wrap to 2-3 columns.
   - Below 768px the rail becomes a bottom navigation bar, the cards stack, and the day timeline gets a full-width row.

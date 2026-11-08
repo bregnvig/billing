@@ -114,7 +114,7 @@
     }
 
     <div class="mt-4 rounded-lg border border-line bg-surface">
-      <form class="flex flex-wrap items-start gap-3 border-b border-line p-6" (submit)="addDevice($event)">
+      <form novalidate class="flex flex-wrap items-start gap-3 border-b border-line p-6" (submit)="addDevice($event)">
         <div class="min-w-48 flex-1">
           <label for="device-name" class="text-xs font-medium text-muted">{{ 'settings.devices.name' | translate }}</label>
           <input

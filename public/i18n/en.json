@@ -53,7 +53,11 @@
       "daysWithTime_other": "{{count}} days with time",
       "perDay": "{{duration}} per day",
       "summary": "{{worked}} worked in {{month}} so far, against {{previous}} at the same point in {{previousMonth}}."
-    }
+    },
+    "assignUnassigned": "Assign {{duration}} of unassigned time",
+    "assignTitle": "Assign today's unassigned time",
+    "assignHint": "Assign {{count}} unassigned period(s) from today ({{duration}}) to:",
+    "openInWeek": "Open in week view"
   },
   "timeline": {
     "periods": "{{count}} periods",
@@ -129,7 +133,7 @@
     "next": "Next week",
     "today": "Today",
     "worked": "{{duration}} worked",
-    "shortcuts": "Keys: ← → change week · T today · Enter or A on a period to assign it",
+    "shortcuts": "Keys: ← → change week · T today · on a period: Enter or A assign · B break/work · Delete remove",
     "assignAll": "Assign all unassigned ({{count}})",
     "noTime": "No time recorded.",
     "now": "now",
@@ -141,10 +145,22 @@
     "errors": {
       "assign": "Couldn't assign. Check your connection and try again.",
       "undo": "Couldn't undo. Assign the period again by hand.",
-      "add": "Couldn't add the period. Check your connection and try again."
+      "add": "Couldn't add the period. Check your connection and try again.",
+      "save": "Couldn't save. Check your connection and try again."
     },
     "addPeriod": "Add period",
-    "added": "Period {{start}}–{{end}} added"
+    "added": "Period {{start}}–{{end}} added",
+    "gap": "Not recorded",
+    "countAsWork": "Count as work",
+    "markAsBreak": "Mark as break",
+    "countGapAria": "Count {{start}}–{{end}} as work",
+    "countAsWorkAria": "Count the break from {{start}} as work",
+    "markAsBreakAria": "Mark the period from {{start}} as a break",
+    "countedAsWork": "{{start}}–{{end}} counted as work",
+    "markedAsBreak": "{{start}}–{{end}} marked as a break",
+    "delete": "Delete",
+    "deleteAria": "Delete the period {{start}}–{{end}}",
+    "deleted": "Period {{start}}–{{end}} deleted"
   },
   "picker": {
     "search": "Search projects",
@@ -177,6 +193,61 @@
       "format": "Use a time like 08:30 or 830.",
       "endBeforeStart": "End must be after start.",
       "future": "Can't be in the future."
+    }
+  },
+  "projects": {
+    "title": "Projects",
+    "description": "Projects and their optional tasks. A task can have default hours that fill in new manual periods.",
+    "newName": "New project",
+    "newPlaceholder": "e.g. Acme website",
+    "create": "Create project",
+    "creating": "Creating…",
+    "none": "No projects yet. Create one above, or from the week view while assigning time.",
+    "name": "Project name",
+    "rename": "Rename {{name}}",
+    "save": "Save",
+    "cancel": "Cancel",
+    "archive": "Archive",
+    "restore": "Restore",
+    "archivedCount": "Archived projects ({{count}})",
+    "archivedToast": "{{name}} archived",
+    "restoredToast": "{{name}} restored",
+    "color": "Color",
+    "colors": {
+      "blue": "Blue",
+      "orange": "Orange",
+      "pink": "Pink",
+      "brown": "Brown",
+      "green": "Green",
+      "purple": "Purple",
+      "yellow": "Yellow",
+      "red": "Red"
+    },
+    "tasks": "Tasks",
+    "task": {
+      "name": "Task name",
+      "defaultStart": "Default start",
+      "defaultEnd": "Default end",
+      "defaultHint": "Default hours are optional. They fill in the times when you add a period for this task.",
+      "add": "Add task",
+      "edit": "Edit {{name}}",
+      "archive": "Archive {{name}}",
+      "none": "No tasks. Time can be booked on the project itself.",
+      "noDefault": "No default hours",
+      "archivedCount": "Archived tasks ({{count}})"
+    },
+    "errors": {
+      "name": {
+        "required": "Enter a name.",
+        "tooLong": "Use at most 60 characters.",
+        "duplicate": "That name is already used."
+      },
+      "format": "Use a time like 08:00 or 800.",
+      "hours": {
+        "incomplete": "Enter both a default start and end, or neither.",
+        "endBeforeStart": "Default end must be after the start."
+      },
+      "save": "Couldn't save. Check your connection and try again."
     }
   }
 }

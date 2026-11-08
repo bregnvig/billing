@@ -8,6 +8,7 @@ import {
   PeriodRef,
   PeriodType,
   removePeriod,
+  setPeriodType,
   TimeEntry,
   timeEntryId,
 } from '@loopme/model';
@@ -53,6 +54,46 @@ export class TimeEntriesService {
       tx.set(doc(entries, id), entry);
     });
     return () => this.removePeriod({ entryId: id, periodId });
+  };
+
+  /** Switches a period between work and break. Resolves to an undo function. */
+  readonly setPeriodType = async (ref: PeriodRef, type: PeriodType): Promise<() => Promise<unknown>> => {
+    const entryRef = doc(timeEntriesCollection(this.#db), ref.entryId);
+    const previous = await runTransaction(this.#db, async tx => {
+      const snapshot = await tx.get(entryRef);
+      const entry = snapshot.data();
+      const before = entry?.periods.find(p => p.id === ref.periodId)?.type;
+      const updated = entry && setPeriodType(entry, ref.periodId, type, new Date());
+      if (!updated || !before) throw new Error('Period not found');
+      tx.set(entryRef, updated);
+      return before;
+    });
+    return () => this.setPeriodType(ref, previous);
+  };
+
+  /**
+   * Deletes a period. Resolves to an undo function that puts the exact same period (id, times,
+   * type, source) back into the same project/task entry, recreating the entry if needed.
+   */
+  readonly deletePeriod = async (ref: PeriodRef): Promise<() => Promise<unknown>> => {
+    const entries = timeEntriesCollection(this.#db);
+    const deleted = await runTransaction(this.#db, async tx => {
+      const entryRef = doc(entries, ref.entryId);
+      const entry = (await tx.get(entryRef)).data();
+      const period = entry?.periods.find(p => p.id === ref.periodId);
+      if (!entry || !period) throw new Error('Period not found');
+      const updated = removePeriod(entry, ref.periodId, new Date());
+      if (updated) tx.set(entryRef, updated);
+      else tx.delete(entryRef);
+      return { period, date: entry.date, assignment: { projectId: entry.projectId, taskId: entry.taskId } };
+    });
+    return () =>
+      runTransaction(this.#db, async tx => {
+        const entryRef = doc(entries, ref.entryId);
+        const existing = (await tx.get(entryRef)).data() ?? null;
+        if (existing?.periods.some(p => p.id === deleted.period.id)) return;
+        tx.set(entryRef, addPeriod(existing, deleted.date, deleted.assignment, deleted.period, new Date()));
+      });
   };
 
   /** Removes a period (deleting its entry if it's left empty). */
