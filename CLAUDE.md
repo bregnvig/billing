@@ -5,7 +5,7 @@
 **Loopme** tracks **working hours per weekday**. It has three parts:
 
 1. **Frontend (this Angular app)**: shows the hours worked on each weekday and lets the user edit them.
-2. **Firebase backend**: stores all data in Firestore. Development uses the local emulators (fake demo project `demo-billing`); production is the real project **`billing-4e274`** (alias `prod` in `.firebaserc`).
+2. **Firebase backend**: stores all data in Firestore. Development uses the local emulators (fake demo project `demo-billing`); production is the real project **`billing-4e274`** (alias `prod` in `.firebaserc`), served at **https://billing.loopme.dk** (Firebase Hosting custom domain; DNS at one.com). `authDomain` is that domain too, so it must stay in Auth "Authorized domains" and its `/__/auth/handler` in the OAuth client's redirect URIs.
 3. **OS hooks**: small scripts/hooks on the user's machine that report when they *think* a workday started and stopped (e.g. login/unlock, logout/lock/suspend). These are best-effort guesses, so the UI is where they get corrected.
 
 ## Domain model

@@ -9,7 +9,9 @@ export const environment: Environment = {
   production: true,
   firebase: {
     apiKey: 'AIzaSyCtrTwqj5JWHCClQ90Tix4OrIscPl1Eieg',
-    authDomain: 'billing-4e274.firebaseapp.com',
+    // Our own domain, so the Google sign-in popup runs first-party (needs the domain in Auth "Authorized domains"
+    // and https://billing.loopme.dk/__/auth/handler as a redirect URI on the OAuth web client).
+    authDomain: 'billing.loopme.dk',
     projectId: 'billing-4e274',
     storageBucket: 'billing-4e274.firebasestorage.app',
     messagingSenderId: '1079329898985',
