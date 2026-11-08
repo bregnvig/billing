@@ -19,11 +19,27 @@
   - Hook periods land in the day's **unassigned** entry (`projectId: null`). The hooks only know when work started and stopped, so the user moves those periods to a project/task in the UI.
   - A running period has `end: null` until a stop is reported.
 
-Types, Firestore converters and collection refs live in `src/app/data/`. Top-level collections: `projects`, `tasks` (with `projectId`), `timeEntries`.
+The **shared model** lives in `model/` and is imported as `@loopme/model` by both the web app and Cloud Functions (path in `tsconfig.json` and `functions/tsconfig.json`). It holds the types, collection names (`COLLECTIONS`), `timeEntryId()`, durations and time-zone date helpers. Plain TypeScript only, with no Angular or Firebase imports. The Firestore converters stay per side because the web and admin SDKs differ: `src/app/data/converters.ts` and `functions/src/firestore.ts`.
+
+Collections: `projects`, `tasks`, `timeEntries` (owner read/write), `devices`, `hookEvents` (owner read-only, written by functions) and `deviceTokens` (functions only).
+
+## OS hooks and Cloud Functions
+
+- `hooks/loopme-hook` (bash) runs as a systemd user service (`loopme-hook watch`) and reports `start`/`stop` events:
+  - login/logout: the service starting/stopping with the desktop session
+  - lock/unlock: polls `omarchy-shell lock isLocked` every 10s (Omarchy's lock screen has no hook)
+  - sleep/resume: systemd-logind `PrepareForSleep`
+- Events are queued in `~/.local/state/loopme/queue.jsonl` and sent when online. Each has an `eventId`, so resends are safe.
+- `hooks/install.sh` installs or uninstalls the script, config (`~/.config/loopme/`, token file mode 600) and the service. Get a token in the app under Settings > Devices.
+- Functions (`functions/`, region `europe-west1`):
+  - `reportEvent`: HTTP, auth via `Authorization: Bearer <device token>`. Only SHA-256 hashes of tokens are stored.
+  - `createDevice` / `revokeDevice`: callable, owner only.
+  - The event logic is pure and unit-tested in `functions/src/events.ts`.
+- Functions are bundled with esbuild (so `@loopme/model` is inlined) and type-checked with `tsc`. Pass options like region per function (`functions/src/options.ts`), not via `setGlobalOptions`: with ES modules that runs too late.
 
 ## Auth
 
-- Google sign-in only, and only **one allowed account**: `allowedEmail` in `src/app/firebase/firebase.config.ts`, duplicated in `firestore.rules` (keep both in sync). The email must be verified.
+- Google sign-in only, and only **one allowed account**: `allowedEmail` in `src/app/firebase/firebase.config.ts`, duplicated in `firestore.rules` and `OWNER_EMAIL` in `functions/.env` (keep all three in sync). The email must be verified.
 - `AuthService` (`src/app/auth/`) exposes `user` / `allowed` signals. `authGuard` protects everything under the `Shell` layout, and `loginGuard` keeps the allowed user off `/login`.
 - In the emulator, "Sign in with Google" opens a fake account picker: add an account with the allowed email there.
 
@@ -55,8 +71,11 @@ Types, Firestore converters and collection refs live in `src/app/data/`. Top-lev
 
 ## Commands
 
-- `npm run emulators`: start the Firebase emulators (UI at http://127.0.0.1:4100, Firestore 8180, Auth 9199). Data is saved to `.firebase-data/` on exit. The ports are non-default because the F2020 project's emulator uses the defaults.
+- `npm run emulators`: build the functions and start the Firebase emulators (UI at http://127.0.0.1:4100, Firestore 8180, Auth 9199, Functions 5101). Data is saved to `.firebase-data/` on exit. The ports are non-default because the F2020 project's emulator uses the defaults.
 - `npm run kill-ports`: force-kills whatever listens on this project's emulator ports (same approach as F2020, via `kill-port`). It's `kill -9`, so the emulator does **not** export data; prefer Ctrl+C and use this only when the emulator won't die.
 - `npm start`: dev server (`ng serve`). Expects the emulators to be running
 - `npm run build`: production build
-- `npm test`: run unit tests
+- `npm test`: run the web app's unit tests
+- `npm run functions:test`: unit tests for the functions and the shared model
+- `npm run functions:watch`: rebuild the functions on change (the emulator picks them up)
+- `npm run test:e2e`: end-to-end test of functions, rules and the hook script. It starts its own emulators on separate ports (`firebase.e2e.json`), so it can run next to `npm run emulators`

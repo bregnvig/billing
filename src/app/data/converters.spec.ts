@@ -1,6 +1,6 @@
 import { QueryDocumentSnapshot, Timestamp } from 'firebase/firestore';
 import { timeEntryConverter } from './converters';
-import { entryDurationMs, TimeEntry, timeEntryId, toIsoDate } from './model';
+import { entryDurationMs, TimeEntry, timeEntryId, toIsoDate } from '@loopme/model';
 
 const at = (hhmm: string) => new Date(`2026-11-05T${hhmm}:00`);
 

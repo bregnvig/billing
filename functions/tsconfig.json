@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "strict": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "paths": {
+      "@loopme/model": ["../model/index.ts"]
+    }
+  },
+  "include": ["src", "../model"]
+}

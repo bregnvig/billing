@@ -23,6 +23,7 @@ export class Shell {
   protected readonly nav = [
     { path: '/week', icon: 'calendar_view_week', label: 'Week' },
     { path: '/projects', icon: 'folder', label: 'Projects' },
+    { path: '/settings', icon: 'settings', label: 'Settings' },
   ];
 
   protected readonly signOut = async (): Promise<void> => {

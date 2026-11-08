@@ -5,7 +5,7 @@ import {
   SnapshotOptions,
   Timestamp,
 } from 'firebase/firestore';
-import { Project, Task, TimeEntry, Period } from './model';
+import { Device, Period, Project, Task, TimeEntry } from '@loopme/model';
 
 const toTimestamp = (d: Date | null) => (d ? Timestamp.fromDate(d) : null);
 const toDate = (t: unknown) => (t instanceof Timestamp ? t.toDate() : null);
@@ -82,6 +82,23 @@ export const timeEntryConverter: FirestoreDataConverter<TimeEntry> = {
       periods,
       note: data['note'] ?? null,
       ...auditFromFirestore(data),
+    };
+  },
+};
+
+/** Devices are written only by Cloud Functions, so this converter only reads. */
+export const deviceConverter: FirestoreDataConverter<Device> = {
+  toFirestore: (): DocumentData => {
+    throw new Error('Devices are managed by Cloud Functions (createDevice / revokeDevice).');
+  },
+  fromFirestore: (snapshot: QueryDocumentSnapshot, options?: SnapshotOptions): Device => {
+    const data = snapshot.data(options);
+    return {
+      id: snapshot.id,
+      name: data['name'],
+      createdAt: toDate(data['createdAt']) ?? new Date(),
+      lastSeenAt: toDate(data['lastSeenAt']),
+      revokedAt: toDate(data['revokedAt']),
     };
   },
 };

@@ -14,6 +14,10 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'week' },
       { path: 'week', loadComponent: () => import('./week/week.page').then((m) => m.WeekPage) },
+      {
+        path: 'settings',
+        loadComponent: () => import('./settings/settings.page').then((m) => m.SettingsPage),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

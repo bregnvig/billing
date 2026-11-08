@@ -1,18 +1,15 @@
 /**
- * Domain model for the working-hours tracker.
+ * Domain entities, shared by the web app and Cloud Functions (import from `@loopme/model`).
+ * Plain TypeScript only: no Angular or Firebase imports here.
  *
- * Firestore layout (all top-level collections):
- *   projects/{projectId}
- *   tasks/{taskId}            -> belongs to a project via `projectId`
- *   timeEntries/{entryId}     -> one per (date, project, task); id from `timeEntryId()`
- *
- * Dates are `Date` in the app and Firestore `Timestamp` in the database;
- * see `converters.ts` for the mapping.
+ * Dates are `Date` here and Firestore `Timestamp` in the database. Each side has its own
+ * converter, because the web and admin SDKs have different Timestamp classes:
+ * src/app/data/converters.ts and functions/src/firestore.ts.
  */
 
 /**
  * Palette key for a project's color. The actual light/dark values and the marker shape
- * live in the UI (see the `ui-design` skill), so stored data doesn't depend on the theme.
+ * live in the UI (see the `ui-design` skill and src/tailwind.css), so stored data doesn't depend on the theme.
  */
 export type ProjectColor =
   'blue' | 'orange' | 'pink' | 'brown' | 'green' | 'purple' | 'yellow' | 'red';

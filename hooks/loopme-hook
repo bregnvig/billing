@@ -1,0 +1,220 @@
+#!/usr/bin/env bash
+# loopme-hook: reports when your workday starts and stops to Loopme.
+#
+#   loopme-hook watch                 Run as a service: login/logout, lock/unlock, sleep/resume
+#   loopme-hook event start|stop REASON
+#                                     Queue one event and try to send it
+#   loopme-hook flush                 Send queued events
+#   loopme-hook ping                  Check the URL and device token
+#   loopme-hook status                Show config, queue and recent log
+#
+# Events are queued on disk first and sent later if the network is down (e.g. right after
+# login or before sleep). Each event has a unique id, so resending is always safe.
+#
+# Config: ~/.config/loopme/hook.env (LOOPME_URL=...) and ~/.config/loopme/token (mode 600).
+# State:  ~/.local/state/loopme/{queue.jsonl,failed.jsonl,hook.log}
+# Override the folders with LOOPME_CONFIG_DIR / LOOPME_STATE_DIR (used by the tests).
+
+set -uo pipefail
+
+CONFIG_DIR="${LOOPME_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/loopme}"
+STATE_DIR="${LOOPME_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/loopme}"
+QUEUE="$STATE_DIR/queue.jsonl"
+FAILED="$STATE_DIR/failed.jsonl"
+LOG="$STATE_DIR/hook.log"
+POLL_SECONDS="${LOOPME_POLL_SECONDS:-10}"
+FLUSH_EVERY_POLLS=6 # flush roughly every minute while watching
+
+mkdir -p "$STATE_DIR"
+chmod 700 "$STATE_DIR"
+
+log() {
+  printf '%s %s\n' "$(date -Is)" "$*" >>"$LOG"
+  # Keep the log small.
+  if [[ $(wc -l <"$LOG") -gt 2000 ]]; then
+    tail -n 1000 "$LOG" >"$LOG.tmp" && mv "$LOG.tmp" "$LOG"
+  fi
+}
+
+die() {
+  echo "loopme-hook: $*" >&2
+  exit 1
+}
+
+load_config() {
+  [[ -f "$CONFIG_DIR/hook.env" ]] || die "missing $CONFIG_DIR/hook.env (run hooks/install.sh)"
+  # shellcheck source=/dev/null
+  source "$CONFIG_DIR/hook.env"
+  [[ -n "${LOOPME_URL:-}" ]] || die "LOOPME_URL is not set in $CONFIG_DIR/hook.env"
+  [[ -s "$CONFIG_DIR/token" ]] || die "missing $CONFIG_DIR/token (run hooks/install.sh)"
+  TOKEN="$(<"$CONFIG_DIR/token")"
+}
+
+timezone() {
+  local tz
+  tz="$(timedatectl show -p Timezone --value 2>/dev/null)"
+  [[ -n "$tz" ]] || tz="$(readlink /etc/localtime 2>/dev/null | sed 's#.*/zoneinfo/##')"
+  echo "${tz:-UTC}"
+}
+
+# POST a JSON body; prints the HTTP status (000 = no connection).
+post() {
+  curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+    --max-time 5 --connect-timeout 3 \
+    -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+    --data-binary "$1" "$LOOPME_URL" 2>/dev/null || true
+}
+
+queue_event() {
+  local type="$1" reason="$2" line
+  line="$(jq -cn \
+    --arg eventId "$(uuidgen)" --arg type "$type" --arg reason "$reason" \
+    --arg at "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)" --arg tz "$(timezone)" \
+    '{eventId: $eventId, type: $type, at: $at, tz: $tz, reason: $reason}')"
+  (
+    flock 9
+    printf '%s\n' "$line" >>"$QUEUE"
+  ) 9>"$QUEUE.lock"
+  log "queued $type ($reason)"
+}
+
+# Sends queued events in order. Stops at the first network/server error so order is kept.
+flush() {
+  load_config
+  (
+    flock -n 8 || exit 0 # another flush is running
+    [[ -s "$QUEUE" ]] || exit 0
+
+    local snapshot sent=0 code line
+    snapshot="$(cat "$QUEUE")"
+    while IFS= read -r line; do
+      [[ -n "$line" ]] || { sent=$((sent + 1)); continue; }
+      code="$(post "$line")"
+      case "$code" in
+        2??)
+          log "sent $(jq -r '"\(.type) (\(.reason))"' <<<"$line") -> $code"
+          ;;
+        400 | 401 | 403 | 404 | 405)
+          # Won't succeed on retry (bad event, revoked token, wrong URL): park it.
+          printf '%s\n' "$line" >>"$FAILED"
+          log "rejected $(jq -r '.type' <<<"$line") -> $code (moved to failed.jsonl)"
+          ;;
+        *)
+          log "send failed -> ${code:-000}, will retry"
+          break
+          ;;
+      esac
+      sent=$((sent + 1))
+    done <<<"$snapshot"
+
+    # Drop the lines we handled; keep anything queued meanwhile.
+    (
+      flock 9
+      tail -n +$((sent + 1)) "$QUEUE" >"$QUEUE.tmp" && mv "$QUEUE.tmp" "$QUEUE"
+    ) 9>"$QUEUE.lock"
+  ) 8>"$STATE_DIR/flush.lock"
+}
+
+event() {
+  local type="${1:-}" reason="${2:-}"
+  [[ "$type" == start || "$type" == stop ]] || die "usage: loopme-hook event start|stop REASON"
+  [[ "$reason" =~ ^(login|logout|lock|unlock|sleep|resume)$ ]] ||
+    die "REASON must be one of: login logout lock unlock sleep resume"
+  queue_event "$type" "$reason"
+  flush
+}
+
+ping_server() {
+  load_config
+  local code
+  code="$(post '{"type":"ping"}')"
+  case "$code" in
+    200) echo "OK: $LOOPME_URL accepted the token." ;;
+    401) die "the token was refused (unknown or revoked device). Add the device again in Settings." ;;
+    000) die "can't reach $LOOPME_URL. Is the emulator (or network) up?" ;;
+    *) die "unexpected HTTP $code from $LOOPME_URL" ;;
+  esac
+}
+
+# "true", "false" or "" (unknown, e.g. the shell is restarting).
+locked_state() {
+  command -v omarchy-shell >/dev/null || return 0
+  local s
+  s="$(timeout 3 omarchy-shell lock isLocked 2>/dev/null)"
+  [[ "$s" == true || "$s" == false ]] && echo "$s"
+}
+
+watch() {
+  load_config
+  log "watch started"
+
+  on_exit() {
+    trap - TERM INT
+    log "watch stopping"
+    queue_event stop logout
+    timeout 5 "$0" flush || true
+    # Both halves of the logind pipeline (gdbus and its reader) are our direct children.
+    pkill -P $$ 2>/dev/null
+    exit 0
+  }
+  trap on_exit TERM INT
+
+  queue_event start login
+  flush &
+
+  # Suspend/resume from systemd-logind. Lock/unlock comes from polling below, because
+  # the Omarchy lock screen doesn't announce it.
+  gdbus monitor --system --dest org.freedesktop.login1 --object-path /org/freedesktop/login1 2>/dev/null |
+    while IFS= read -r line; do
+      case "$line" in
+        *PrepareForSleep*true*) "$0" event stop sleep ;;
+        *PrepareForSleep*false*)
+          # Omarchy locks before suspend; then "unlock" starts the day, not "resume".
+          [[ "$(locked_state)" == true ]] || "$0" event start resume
+          ;;
+      esac
+    done &
+
+  local previous current polls=0
+  previous="$(locked_state)"
+  while true; do
+    sleep "$POLL_SECONDS" &
+    wait $!
+    current="$(locked_state)"
+    if [[ -n "$current" && -n "$previous" && "$current" != "$previous" ]]; then
+      if [[ "$current" == true ]]; then
+        queue_event stop lock
+      else
+        queue_event start unlock
+      fi
+      flush &
+    fi
+    [[ -n "$current" ]] && previous="$current"
+    polls=$((polls + 1))
+    if ((polls % FLUSH_EVERY_POLLS == 0)); then flush & fi
+  done
+}
+
+status() {
+  echo "Config:  $CONFIG_DIR"
+  [[ -f "$CONFIG_DIR/hook.env" ]] && sed 's/^/  /' "$CONFIG_DIR/hook.env"
+  [[ -s "$CONFIG_DIR/token" ]] && echo "  token: present" || echo "  token: MISSING"
+  echo "Queued:  $( [[ -f "$QUEUE" ]] && wc -l <"$QUEUE" || echo 0 ) event(s)"
+  echo "Failed:  $( [[ -f "$FAILED" ]] && wc -l <"$FAILED" || echo 0 ) event(s)"
+  echo "Locked:  $(locked_state || true)"
+  echo "Recent log:"
+  [[ -f "$LOG" ]] && tail -n 10 "$LOG" | sed 's/^/  /'
+}
+
+for tool in curl jq uuidgen flock; do
+  command -v "$tool" >/dev/null || die "needs '$tool' installed"
+done
+
+case "${1:-}" in
+  watch) watch ;;
+  event) shift && event "$@" ;;
+  flush) flush ;;
+  ping) ping_server ;;
+  status) status ;;
+  *) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//' && exit 2 ;;
+esac
