@@ -12,13 +12,15 @@
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
     <link rel="manifest" href="manifest.webmanifest" />
     <script>
-      // Apply the saved theme before Angular boots, so there's no flash of the wrong theme.
-      // Keep the storage key in sync with ThemeService.
+      // Apply the saved theme and language before Angular boots, so there's no flash of the
+      // wrong theme. Keep the storage keys in sync with ThemeService and LanguageService.
       try {
         const theme = localStorage.getItem('loopme.theme');
         if (theme === 'light' || theme === 'dark') {
           document.documentElement.dataset.theme = theme;
         }
+        const lang = localStorage.getItem('loopme.lang');
+        if (lang === 'en' || lang === 'da') document.documentElement.lang = lang;
       } catch {}
     </script>
   </head>

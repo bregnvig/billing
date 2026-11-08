@@ -5,18 +5,22 @@ export const routes: Routes = [
   {
     path: 'login',
     canMatch: [loginGuard],
-    loadComponent: () => import('./auth/login.page').then((m) => m.LoginPage),
+    loadComponent: () => import('./auth/login.page').then(m => m.LoginPage),
   },
   {
     path: '',
     canMatch: [authGuard],
-    loadComponent: () => import('./shell/shell').then((m) => m.Shell),
+    loadComponent: () => import('./shell/shell').then(m => m.Shell),
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'week' },
-      { path: 'week', loadComponent: () => import('./week/week.page').then((m) => m.WeekPage) },
+      { path: '', pathMatch: 'full', redirectTo: 'overview' },
+      {
+        path: 'overview',
+        loadComponent: () => import('./overview/overview.page').then(m => m.OverviewPage),
+      },
+      { path: 'week', loadComponent: () => import('./week/week.page').then(m => m.WeekPage) },
       {
         path: 'settings',
-        loadComponent: () => import('./settings/settings.page').then((m) => m.SettingsPage),
+        loadComponent: () => import('./settings/settings.page').then(m => m.SettingsPage),
       },
     ],
   },

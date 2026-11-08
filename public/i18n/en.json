@@ -1,0 +1,130 @@
+{
+  "nav": {
+    "main": "Main",
+    "overview": "Overview",
+    "week": "Week",
+    "projects": "Projects",
+    "settings": "Settings",
+    "signOut": "Sign out {{email}}"
+  },
+  "login": {
+    "title": "Sign in",
+    "subtitle": "Track and correct your working hours.",
+    "signInWithGoogle": "Sign in with Google",
+    "signingIn": "Signing in…",
+    "noAccess": "{{email}} doesn't have access to Loopme. Sign in with your own account.",
+    "useAnotherAccount": "Use another account",
+    "errors": {
+      "popupBlocked": "The sign-in window was blocked. Allow pop-ups for this site and try again.",
+      "network": "Can't reach the sign-in service. Is the emulator running (npm run emulators)?",
+      "failed": "Sign-in failed. Try again."
+    }
+  },
+  "errors": {
+    "offline": "Can't reach the database. Is the emulator running? Changes will sync when it's back."
+  },
+  "overview": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening",
+      "withName": "{{greeting}}, {{name}}"
+    },
+    "subline": "{{date}} · Week {{week}}",
+    "loading": "Loading",
+    "worked": "Worked",
+    "soFar": "so far",
+    "runningSince": "Running since {{time}}",
+    "unassigned": "{{duration}} unassigned",
+    "today": {
+      "title": "Today",
+      "noTime": "No time recorded today.",
+      "vsLastWeekday": "vs last {{weekday}}"
+    },
+    "week": {
+      "title": "This week",
+      "subtitle": "Week {{week}} · {{range}}",
+      "vs": "vs this point last week"
+    },
+    "month": {
+      "title": "This month",
+      "vs": "vs this point in {{month}}",
+      "daysWithTime_one": "1 day with time",
+      "daysWithTime_other": "{{count}} days with time",
+      "perDay": "{{duration}} per day",
+      "summary": "{{worked}} worked in {{month}} so far, against {{previous}} at the same point in {{previousMonth}}."
+    }
+  },
+  "timeline": {
+    "periods": "{{count}} periods",
+    "noPeriods": "No periods",
+    "break": "Break",
+    "unassigned": "Unassigned",
+    "unknownProject": "Unknown project",
+    "period": "{{label}}, {{start}} to {{end}}, {{duration}}",
+    "nowRunning": "now (running)"
+  },
+  "weekBars": {
+    "label": "Hours per day",
+    "day": "{{day}}: {{work}}, last week {{lastWeek}}",
+    "thisWeek": "This week",
+    "lastWeek": "Last week"
+  },
+  "week": {
+    "title": "Week",
+    "placeholder": "Weekday overview comes here."
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": {
+      "title": "Appearance",
+      "description": "Stored on this device only.",
+      "theme": "Theme",
+      "themes": {
+        "system": "System",
+        "light": "Light",
+        "dark": "Dark"
+      },
+      "language": "Language"
+    },
+    "devices": {
+      "title": "Devices",
+      "description": "Computers that report when your workday starts and stops (login, lock, sleep).",
+      "tokenFor": "Token for {{name}}",
+      "tokenOnce": "Copy it now. It's shown only once, and only a hash of it is stored.",
+      "copyToken": "Copy token",
+      "copied": "Copied",
+      "runInstall": "Then run this in the billing folder on that computer, and paste the token when asked:",
+      "copyCommand": "Copy command",
+      "done": "Done",
+      "name": "Device name",
+      "nameRequired": "Give the device a name, e.g. the computer's hostname.",
+      "nameTooLong": "Use at most 50 characters.",
+      "add": "Add device",
+      "adding": "Adding…",
+      "empty": "No devices yet. Add one to start recording working time from your computer.",
+      "columns": {
+        "name": "Name",
+        "added": "Added",
+        "lastSeen": "Last seen",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "never": "Never",
+      "revoked": "Revoked",
+      "active": "Active",
+      "revokeWarning": "Its token stops working.",
+      "revoke": "Revoke",
+      "revokeAsk": "Revoke…",
+      "revokeAria": "Revoke {{name}}",
+      "revoking": "Revoking…",
+      "cancel": "Cancel",
+      "errors": {
+        "load": "Can't load devices. Is the emulator running?",
+        "add": "Couldn't add the device. Is the emulator running with functions?",
+        "copy": "Couldn't copy. Select the text and copy it manually.",
+        "revoke": "Couldn't revoke the device. Try again."
+      }
+    }
+  }
+}

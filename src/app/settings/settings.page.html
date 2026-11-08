@@ -1,85 +1,122 @@
 <div class="mx-auto max-w-5xl px-4 py-8 sm:px-8">
-  <h1 class="text-3xl font-normal">Settings</h1>
+  <h1 class="text-3xl font-normal">{{ 'settings.title' | translate }}</h1>
+
+  <section class="mt-10" aria-labelledby="appearance-title">
+    <h2 id="appearance-title" class="text-xl font-normal text-muted">{{ 'settings.appearance.title' | translate }}</h2>
+    <p class="mt-1 text-muted">{{ 'settings.appearance.description' | translate }}</p>
+
+    <div class="mt-4 divide-y divide-line rounded-lg border border-line bg-surface">
+      <fieldset class="flex flex-wrap items-center justify-between gap-3 p-6">
+        <legend class="sr-only">{{ 'settings.appearance.theme' | translate }}</legend>
+        <span class="font-medium" aria-hidden="true">{{ 'settings.appearance.theme' | translate }}</span>
+        <div class="flex flex-wrap gap-2">
+          @for (option of themes; track option.value) {
+          <label
+            class="flex h-9 cursor-pointer items-center gap-2 rounded-full border px-4 transition-colors duration-150 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent"
+            [class.border-accent]="theme.setting() === option.value"
+            [class.bg-accent-soft]="theme.setting() === option.value"
+            [class.text-accent]="theme.setting() === option.value"
+            [class.border-line]="theme.setting() !== option.value"
+            [class.hover:bg-raised]="theme.setting() !== option.value">
+            <input
+              type="radio"
+              name="theme"
+              class="sr-only"
+              [value]="option.value"
+              [checked]="theme.setting() === option.value"
+              (change)="theme.set(option.value)" />
+            <span class="material-symbols-outlined" aria-hidden="true">{{ option.icon }}</span>
+            {{ 'settings.appearance.themes.' + option.value | translate }}
+          </label>
+          }
+        </div>
+      </fieldset>
+
+      <fieldset class="flex flex-wrap items-center justify-between gap-3 p-6">
+        <legend class="sr-only">{{ 'settings.appearance.language' | translate }}</legend>
+        <span class="font-medium" aria-hidden="true">{{ 'settings.appearance.language' | translate }}</span>
+        <div class="flex flex-wrap gap-2">
+          @for (option of languages; track option.code) {
+          <label
+            class="flex h-9 cursor-pointer items-center rounded-full border px-4 transition-colors duration-150 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent"
+            [class.border-accent]="language.language() === option.code"
+            [class.bg-accent-soft]="language.language() === option.code"
+            [class.text-accent]="language.language() === option.code"
+            [class.border-line]="language.language() !== option.code"
+            [class.hover:bg-raised]="language.language() !== option.code"
+            [attr.lang]="option.code">
+            <input
+              type="radio"
+              name="language"
+              class="sr-only"
+              [value]="option.code"
+              [checked]="language.language() === option.code"
+              (change)="language.set(option.code)" />
+            {{ option.name }}
+          </label>
+          }
+        </div>
+      </fieldset>
+    </div>
+  </section>
 
   <section class="mt-10" aria-labelledby="devices-title">
-    <h2 id="devices-title" class="text-xl font-normal text-muted">Devices</h2>
-    <p class="mt-1 text-muted">
-      Computers that report when your workday starts and stops (login, lock, sleep).
-    </p>
+    <h2 id="devices-title" class="text-xl font-normal text-muted">{{ 'settings.devices.title' | translate }}</h2>
+    <p class="mt-1 text-muted">{{ 'settings.devices.description' | translate }}</p>
 
     @if (loadError() || actionError(); as message) {
-      <div class="mt-4 flex gap-3 rounded-lg border border-danger p-4" role="alert">
-        <span class="material-symbols-outlined text-danger" aria-hidden="true">error</span>
-        <p>{{ message }}</p>
-      </div>
-    }
+    <div class="mt-4 flex gap-3 rounded-lg border border-danger p-4" role="alert">
+      <span class="material-symbols-outlined text-danger" aria-hidden="true">error</span>
+      <p>{{ message | translate }}</p>
+    </div>
+    } @if (created(); as device) {
+    <div class="mt-4 rounded-lg border border-accent bg-surface p-6" role="status">
+      <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-accent" aria-hidden="true">key</span>
+        <div class="min-w-0 flex-1">
+          <h3 class="text-base font-medium">{{ 'settings.devices.tokenFor' | translate: { name: device.name } }}</h3>
+          <p class="mt-1 text-muted">{{ 'settings.devices.tokenOnce' | translate }}</p>
 
-    @if (created(); as device) {
-      <div class="mt-4 rounded-lg border border-accent bg-surface p-6" role="status">
-        <div class="flex items-start gap-3">
-          <span class="material-symbols-outlined text-accent" aria-hidden="true">key</span>
-          <div class="min-w-0 flex-1">
-            <h3 class="text-base font-medium">Token for {{ device.name }}</h3>
-            <p class="mt-1 text-muted">
-              Copy it now. It's shown only once, and only a hash of it is stored.
-            </p>
-
-            <div class="mt-4 flex items-center gap-2">
-              <code
-                class="min-w-0 flex-1 truncate rounded-md bg-raised px-3 py-2 font-mono text-sm"
-                >{{ device.token }}</code
-              >
-              <button
-                type="button"
-                class="flex h-9 shrink-0 items-center gap-1 rounded-full bg-raised px-4 transition-colors duration-150 hover:bg-line"
-                (click)="copy('token', device.token)"
-              >
-                <span class="material-symbols-outlined" aria-hidden="true">{{
-                  copied() === 'token' ? 'check' : 'content_copy'
-                }}</span>
-                {{ copied() === 'token' ? 'Copied' : 'Copy token' }}
-              </button>
-            </div>
-
-            <p class="mt-4 text-muted">
-              Then run this in the billing folder on that computer, and paste the token when asked:
-            </p>
-            <div class="mt-2 flex items-center gap-2">
-              <code
-                class="min-w-0 flex-1 overflow-x-auto rounded-md bg-raised px-3 py-2 font-mono text-sm whitespace-nowrap"
-                >{{ installCommand }}</code
-              >
-              <button
-                type="button"
-                class="flex h-9 shrink-0 items-center gap-1 rounded-full bg-raised px-4 transition-colors duration-150 hover:bg-line"
-                (click)="copy('command', installCommand)"
-              >
-                <span class="material-symbols-outlined" aria-hidden="true">{{
-                  copied() === 'command' ? 'check' : 'content_copy'
-                }}</span>
-                {{ copied() === 'command' ? 'Copied' : 'Copy command' }}
-              </button>
-            </div>
-
+          <div class="mt-4 flex items-center gap-2">
+            <code class="min-w-0 flex-1 truncate rounded-md bg-raised px-3 py-2 font-mono text-sm">{{ device.token }}</code>
             <button
               type="button"
-              class="mt-6 h-9 rounded-full px-4 font-medium text-accent transition-colors duration-150 hover:bg-accent-soft"
-              (click)="created.set(null)"
-            >
-              Done
+              class="flex h-9 shrink-0 items-center gap-1 rounded-full bg-raised px-4 transition-colors duration-150 hover:bg-line"
+              (click)="copy('token', device.token)">
+              <span class="material-symbols-outlined" aria-hidden="true">{{ copied() === 'token' ? 'check' : 'content_copy' }}</span>
+              {{ (copied() === 'token' ? 'settings.devices.copied' : 'settings.devices.copyToken') | translate }}
             </button>
           </div>
+
+          <p class="mt-4 text-muted">{{ 'settings.devices.runInstall' | translate }}</p>
+          <div class="mt-2 flex items-center gap-2">
+            <code class="min-w-0 flex-1 overflow-x-auto rounded-md bg-raised px-3 py-2 font-mono text-sm whitespace-nowrap">
+              {{ installCommand }}
+            </code>
+            <button
+              type="button"
+              class="flex h-9 shrink-0 items-center gap-1 rounded-full bg-raised px-4 transition-colors duration-150 hover:bg-line"
+              (click)="copy('command', installCommand)">
+              <span class="material-symbols-outlined" aria-hidden="true">{{ copied() === 'command' ? 'check' : 'content_copy' }}</span>
+              {{ (copied() === 'command' ? 'settings.devices.copied' : 'settings.devices.copyCommand' ) | translate }}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            class="mt-6 h-9 rounded-full px-4 font-medium text-accent transition-colors duration-150 hover:bg-accent-soft"
+            (click)="created.set(null)">
+            {{ 'settings.devices.done' | translate }}
+          </button>
         </div>
       </div>
+    </div>
     }
 
     <div class="mt-4 rounded-lg border border-line bg-surface">
-      <form
-        class="flex flex-wrap items-start gap-3 border-b border-line p-6"
-        (submit)="addDevice($event)"
-      >
+      <form class="flex flex-wrap items-start gap-3 border-b border-line p-6" (submit)="addDevice($event)">
         <div class="min-w-48 flex-1">
-          <label for="device-name" class="text-xs font-medium text-muted">Device name</label>
+          <label for="device-name" class="text-xs font-medium text-muted">{{ 'settings.devices.name' | translate }}</label>
           <input
             id="device-name"
             class="mt-1 h-10 w-full rounded-md border border-line bg-surface px-3 outline-none focus:border-2 focus:border-accent"
@@ -87,104 +124,89 @@
             autocomplete="off"
             [formField]="deviceForm.name"
             [attr.aria-invalid]="deviceForm.name().touched() && deviceForm.name().invalid()"
-            aria-describedby="device-name-error"
-          />
+            aria-describedby="device-name-error" />
           <p id="device-name-error" class="mt-1 min-h-4 text-xs text-danger">
-            @if (deviceForm.name().touched()) {
-              {{ deviceForm.name().errors()[0]?.message }}
-            }
+            @if (deviceForm.name().touched() && deviceForm.name().errors()[0]?.message; as key) { {{ key | translate }} }
           </p>
         </div>
         <button
           type="submit"
           class="mt-5 flex h-10 items-center gap-2 rounded-full bg-accent px-5 font-medium text-on-accent transition-opacity duration-150 hover:opacity-90 disabled:opacity-60"
-          [disabled]="adding()"
-        >
+          [disabled]="adding()">
           <span class="material-symbols-outlined" aria-hidden="true">add</span>
-          {{ adding() ? 'Adding…' : 'Add device' }}
+          {{ (adding() ? 'settings.devices.adding' : 'settings.devices.add') | translate }}
         </button>
       </form>
 
-      @if (devices(); as list) {
-        @if (list.length === 0) {
-          <p class="p-6 text-muted">
-            No devices yet. Add one to start recording working time from your computer.
-          </p>
-        } @else {
-          <div class="overflow-x-auto">
-            <table class="w-full text-left">
-              <thead class="bg-raised text-xs font-medium text-muted">
-                <tr>
-                  <th scope="col" class="px-6 py-3 font-medium">Name</th>
-                  <th scope="col" class="px-6 py-3 font-medium">Added</th>
-                  <th scope="col" class="px-6 py-3 font-medium">Last seen</th>
-                  <th scope="col" class="px-6 py-3 font-medium">Status</th>
-                  <th scope="col" class="px-6 py-3"><span class="sr-only">Actions</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (device of list; track device.id) {
-                  <tr class="h-14 border-t border-line" [class.text-muted]="device.revokedAt">
-                    <td class="px-6 font-medium">{{ device.name }}</td>
-                    <td class="px-6 whitespace-nowrap tabular-nums">
-                      {{ formatDateTime(device.createdAt) }}
-                    </td>
-                    <td class="px-6 whitespace-nowrap tabular-nums">
-                      {{ device.lastSeenAt ? formatDateTime(device.lastSeenAt) : 'Never' }}
-                    </td>
-                    <td class="px-6">
-                      @if (device.revokedAt) {
-                        <span class="rounded-full border border-line px-2 py-0.5 text-xs"
-                          >Revoked</span
-                        >
-                      } @else {
-                        <span class="rounded-full border border-running px-2 py-0.5 text-xs"
-                          >Active</span
-                        >
-                      }
-                    </td>
-                    <td class="px-6 text-right whitespace-nowrap">
-                      @if (!device.revokedAt) {
-                        @if (confirmingRevoke() === device.id) {
-                          <span class="mr-2 text-muted">Its token stops working.</span>
-                          <button
-                            type="button"
-                            class="h-9 rounded-full px-3 font-medium text-danger transition-colors duration-150 hover:bg-raised disabled:opacity-60"
-                            [disabled]="revoking() === device.id"
-                            (click)="revoke(device.id)"
-                          >
-                            {{ revoking() === device.id ? 'Revoking…' : 'Revoke' }}
-                          </button>
-                          <button
-                            type="button"
-                            class="h-9 rounded-full px-3 transition-colors duration-150 hover:bg-raised"
-                            (click)="confirmingRevoke.set(null)"
-                          >
-                            Cancel
-                          </button>
-                        } @else {
-                          <button
-                            type="button"
-                            class="h-9 rounded-full px-3 text-muted transition-colors duration-150 hover:bg-raised hover:text-ink"
-                            [attr.aria-label]="'Revoke ' + device.name"
-                            (click)="confirmingRevoke.set(device.id)"
-                          >
-                            Revoke…
-                          </button>
-                        }
-                      }
-                    </td>
-                  </tr>
+      @if (devices(); as list) { @if (list.length === 0) {
+      <p class="p-6 text-muted">{{ 'settings.devices.empty' | translate }}</p>
+      } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead class="bg-raised text-xs font-medium text-muted">
+            <tr>
+              <th scope="col" class="px-6 py-3 font-medium">{{ 'settings.devices.columns.name' | translate }}</th>
+              <th scope="col" class="px-6 py-3 font-medium">{{ 'settings.devices.columns.added' | translate }}</th>
+              <th scope="col" class="px-6 py-3 font-medium">{{ 'settings.devices.columns.lastSeen' | translate }}</th>
+              <th scope="col" class="px-6 py-3 font-medium">{{ 'settings.devices.columns.status' | translate }}</th>
+              <th scope="col" class="px-6 py-3">
+                <span class="sr-only">{{ 'settings.devices.columns.actions' | translate }}</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (device of list; track device.id) {
+            <tr class="h-14 border-t border-line" [class.text-muted]="device.revokedAt">
+              <td class="px-6 font-medium">{{ device.name }}</td>
+              <td class="px-6 whitespace-nowrap tabular-nums">{{ formatDateTime(device.createdAt) }}</td>
+              <td class="px-6 whitespace-nowrap tabular-nums">
+                @if (device.lastSeenAt) { {{ formatDateTime(device.lastSeenAt) }} } @else { {{ 'settings.devices.never' | translate }} }
+              </td>
+              <td class="px-6">
+                @if (device.revokedAt) {
+                <span class="rounded-full border border-line px-2 py-0.5 text-xs">{{ 'settings.devices.revoked' | translate }}</span>
+                } @else {
+                <span class="rounded-full border border-running px-2 py-0.5 text-xs">{{ 'settings.devices.active' | translate }}</span>
                 }
-              </tbody>
-            </table>
-          </div>
-        }
-      } @else if (!loadError()) {
-        <div class="space-y-3 p-6" aria-hidden="true">
-          <div class="h-4 w-1/3 animate-pulse rounded-sm bg-raised"></div>
-          <div class="h-4 w-1/2 animate-pulse rounded-sm bg-raised"></div>
-        </div>
+              </td>
+              <td class="px-6 text-right whitespace-nowrap">
+                @if (!device.revokedAt) { @if (confirmingRevoke() === device.id) {
+                <span class="mr-2 text-muted">{{ 'settings.devices.revokeWarning' | translate }}</span>
+                <button
+                  type="button"
+                  class="h-9 rounded-full px-3 font-medium text-danger transition-colors duration-150 hover:bg-raised disabled:opacity-60"
+                  [disabled]="revoking() === device.id"
+                  (click)="revoke(device.id)">
+                  {{ (revoking() === device.id ? 'settings.devices.revoking' : 'settings.devices.revoke' ) | translate }}
+                </button>
+                <button
+                  type="button"
+                  class="h-9 rounded-full px-3 transition-colors duration-150 hover:bg-raised"
+                  (click)="confirmingRevoke.set(null)">
+                  {{ 'settings.devices.cancel' | translate }}
+                </button>
+                } @else {
+                <button
+                  type="button"
+                  class="h-9 rounded-full px-3 text-muted transition-colors duration-150 hover:bg-raised hover:text-ink"
+                  [attr.aria-label]="
+                              'settings.devices.revokeAria' | translate: { name: device.name }
+                            "
+                  (click)="confirmingRevoke.set(device.id)">
+                  {{ 'settings.devices.revokeAsk' | translate }}
+                </button>
+                } }
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      } } @else if (!loadError()) {
+      <div class="space-y-3 p-6" aria-hidden="true">
+        <div class="h-4 w-1/3 animate-pulse rounded-sm bg-raised"></div>
+        <div class="h-4 w-1/2 animate-pulse rounded-sm bg-raised"></div>
+      </div>
       }
     </div>
   </section>

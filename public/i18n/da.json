@@ -1,0 +1,130 @@
+{
+  "nav": {
+    "main": "Hovedmenu",
+    "overview": "Overblik",
+    "week": "Uge",
+    "projects": "Projekter",
+    "settings": "Indstillinger",
+    "signOut": "Log ud {{email}}"
+  },
+  "login": {
+    "title": "Log ind",
+    "subtitle": "Registrer og ret dine arbejdstimer.",
+    "signInWithGoogle": "Log ind med Google",
+    "signingIn": "Logger ind…",
+    "noAccess": "{{email}} har ikke adgang til Loopme. Log ind med din egen konto.",
+    "useAnotherAccount": "Brug en anden konto",
+    "errors": {
+      "popupBlocked": "Login-vinduet blev blokeret. Tillad pop op-vinduer for siden, og prøv igen.",
+      "network": "Kan ikke nå login-tjenesten. Kører emulatoren (npm run emulators)?",
+      "failed": "Login mislykkedes. Prøv igen."
+    }
+  },
+  "errors": {
+    "offline": "Kan ikke nå databasen. Kører emulatoren? Ændringer synkroniseres, når den er tilbage."
+  },
+  "overview": {
+    "greeting": {
+      "morning": "Godmorgen",
+      "afternoon": "God eftermiddag",
+      "evening": "Godaften",
+      "withName": "{{greeting}}, {{name}}"
+    },
+    "subline": "{{date}} · Uge {{week}}",
+    "loading": "Indlæser",
+    "worked": "Arbejdet",
+    "soFar": "indtil nu",
+    "runningSince": "Kører siden {{time}}",
+    "unassigned": "{{duration}} ikke tildelt",
+    "today": {
+      "title": "I dag",
+      "noTime": "Ingen tid registreret i dag.",
+      "vsLastWeekday": "vs. sidste {{weekday}}"
+    },
+    "week": {
+      "title": "Denne uge",
+      "subtitle": "Uge {{week}} · {{range}}",
+      "vs": "vs. samme tid sidste uge"
+    },
+    "month": {
+      "title": "Denne måned",
+      "vs": "vs. samme tid i {{month}}",
+      "daysWithTime_one": "1 dag med tid",
+      "daysWithTime_other": "{{count}} dage med tid",
+      "perDay": "{{duration}} pr. dag",
+      "summary": "{{worked}} arbejdet i {{month}} indtil nu, mod {{previous}} på samme tid i {{previousMonth}}."
+    }
+  },
+  "timeline": {
+    "periods": "{{count}} perioder",
+    "noPeriods": "Ingen perioder",
+    "break": "Pause",
+    "unassigned": "Ikke tildelt",
+    "unknownProject": "Ukendt projekt",
+    "period": "{{label}}, {{start}} til {{end}}, {{duration}}",
+    "nowRunning": "nu (kører)"
+  },
+  "weekBars": {
+    "label": "Timer pr. dag",
+    "day": "{{day}}: {{work}}, sidste uge {{lastWeek}}",
+    "thisWeek": "Denne uge",
+    "lastWeek": "Sidste uge"
+  },
+  "week": {
+    "title": "Uge",
+    "placeholder": "Ugeoversigten kommer her."
+  },
+  "settings": {
+    "title": "Indstillinger",
+    "appearance": {
+      "title": "Udseende",
+      "description": "Gemmes kun på denne enhed.",
+      "theme": "Tema",
+      "themes": {
+        "system": "System",
+        "light": "Lyst",
+        "dark": "Mørkt"
+      },
+      "language": "Sprog"
+    },
+    "devices": {
+      "title": "Enheder",
+      "description": "Computere, der rapporterer, hvornår din arbejdsdag starter og stopper (login, lås, dvale).",
+      "tokenFor": "Token til {{name}}",
+      "tokenOnce": "Kopiér det nu. Det vises kun én gang, og kun en hash af det gemmes.",
+      "copyToken": "Kopiér token",
+      "copied": "Kopieret",
+      "runInstall": "Kør derefter dette i billing-mappen på den computer, og indsæt tokenet, når du bliver spurgt:",
+      "copyCommand": "Kopiér kommando",
+      "done": "Færdig",
+      "name": "Enhedsnavn",
+      "nameRequired": "Giv enheden et navn, f.eks. computerens værtsnavn.",
+      "nameTooLong": "Brug højst 50 tegn.",
+      "add": "Tilføj enhed",
+      "adding": "Tilføjer…",
+      "empty": "Ingen enheder endnu. Tilføj en for at begynde at registrere arbejdstid fra din computer.",
+      "columns": {
+        "name": "Navn",
+        "added": "Tilføjet",
+        "lastSeen": "Sidst set",
+        "status": "Status",
+        "actions": "Handlinger"
+      },
+      "never": "Aldrig",
+      "revoked": "Tilbagekaldt",
+      "active": "Aktiv",
+      "revokeWarning": "Dens token holder op med at virke.",
+      "revoke": "Tilbagekald",
+      "revokeAsk": "Tilbagekald…",
+      "revokeAria": "Tilbagekald {{name}}",
+      "revoking": "Tilbagekalder…",
+      "cancel": "Annuller",
+      "errors": {
+        "load": "Kan ikke indlæse enheder. Kører emulatoren?",
+        "add": "Kunne ikke tilføje enheden. Kører emulatoren med functions?",
+        "copy": "Kunne ikke kopiere. Markér teksten, og kopiér den manuelt.",
+        "revoke": "Kunne ikke tilbagekalde enheden. Prøv igen."
+      }
+    }
+  }
+}

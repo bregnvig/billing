@@ -1,0 +1,7 @@
+// The warm greeting gradient: the only gradient allowed (ui-design skill).
+.greeting {
+  background: linear-gradient(90deg, var(--color-greet-from), var(--color-greet-to));
+  background-clip: text;
+  color: transparent;
+  width: fit-content;
+}

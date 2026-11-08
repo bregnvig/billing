@@ -1,48 +1,36 @@
 <div class="flex min-h-full items-center justify-center px-4 py-12">
-  <section
-    class="w-full max-w-sm rounded-lg border border-line bg-surface p-8"
-    aria-labelledby="login-title"
-  >
+  <section class="w-full max-w-sm rounded-lg border border-line bg-surface p-8" aria-labelledby="login-title">
     <img src="loopme.svg" alt="Loopme" class="h-10" />
-    <h1 id="login-title" class="mt-8 text-3xl font-normal">Sign in</h1>
-    <p class="mt-2 text-muted">Track and correct your working hours.</p>
+    <h1 id="login-title" class="mt-8 text-3xl font-normal">{{ 'login.title' | translate }}</h1>
+    <p class="mt-2 text-muted">{{ 'login.subtitle' | translate }}</p>
 
-    @if (auth.user(); as user) {
-      @if (!auth.allowed()) {
-        <div class="mt-6 flex gap-3 rounded-md border border-danger p-4" role="alert">
-          <span class="material-symbols-outlined text-danger" aria-hidden="true">block</span>
-          <p>
-            <span class="font-medium">{{ user.email }}</span> doesn't have access to Loopme. Sign in
-            with your own account.
-          </p>
-        </div>
-        <button
-          type="button"
-          class="mt-6 flex h-10 w-full items-center justify-center gap-2 rounded-full bg-accent font-medium text-on-accent transition-opacity duration-150 hover:opacity-90 disabled:opacity-60"
-          [disabled]="busy()"
-          (click)="useAnotherAccount()"
-        >
-          <span class="material-symbols-outlined" aria-hidden="true">switch_account</span>
-          Use another account
-        </button>
-      }
-    } @else {
-      <button
-        type="button"
-        class="mt-8 flex h-10 w-full items-center justify-center gap-2 rounded-full bg-accent font-medium text-on-accent transition-opacity duration-150 hover:opacity-90 disabled:opacity-60"
-        [disabled]="busy()"
-        (click)="signIn()"
-      >
-        <span class="material-symbols-outlined" aria-hidden="true">login</span>
-        {{ busy() ? 'Signing in…' : 'Sign in with Google' }}
-      </button>
-    }
-
-    @if (error(); as message) {
-      <p class="mt-4 flex gap-2 text-danger" role="alert">
-        <span class="material-symbols-outlined" aria-hidden="true">error</span>
-        {{ message }}
-      </p>
+    @if (auth.user(); as user) { @if (!auth.allowed()) {
+    <div class="mt-6 flex gap-3 rounded-md border border-danger p-4" role="alert">
+      <span class="material-symbols-outlined text-danger" aria-hidden="true">block</span>
+      <p>{{ 'login.noAccess' | translate: { email: user.email } }}</p>
+    </div>
+    <button
+      type="button"
+      class="mt-6 flex h-10 w-full items-center justify-center gap-2 rounded-full bg-accent font-medium text-on-accent transition-opacity duration-150 hover:opacity-90 disabled:opacity-60"
+      [disabled]="busy()"
+      (click)="useAnotherAccount()">
+      <span class="material-symbols-outlined" aria-hidden="true">switch_account</span>
+      {{ 'login.useAnotherAccount' | translate }}
+    </button>
+    } } @else {
+    <button
+      type="button"
+      class="mt-8 flex h-10 w-full items-center justify-center gap-2 rounded-full bg-accent font-medium text-on-accent transition-opacity duration-150 hover:opacity-90 disabled:opacity-60"
+      [disabled]="busy()"
+      (click)="signIn()">
+      <span class="material-symbols-outlined" aria-hidden="true">login</span>
+      {{ (busy() ? 'login.signingIn' : 'login.signInWithGoogle') | translate }}
+    </button>
+    } @if (error(); as message) {
+    <p class="mt-4 flex gap-2 text-danger" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>
+      {{ message | translate }}
+    </p>
     }
   </section>
 </div>

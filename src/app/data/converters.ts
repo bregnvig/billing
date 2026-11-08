@@ -1,10 +1,4 @@
-import {
-  DocumentData,
-  FirestoreDataConverter,
-  QueryDocumentSnapshot,
-  SnapshotOptions,
-  Timestamp,
-} from 'firebase/firestore';
+import { DocumentData, FirestoreDataConverter, QueryDocumentSnapshot, SnapshotOptions, Timestamp } from 'firebase/firestore';
 import { Device, Period, Project, Task, TimeEntry } from '@loopme/model';
 
 const toTimestamp = (d: Date | null) => (d ? Timestamp.fromDate(d) : null);

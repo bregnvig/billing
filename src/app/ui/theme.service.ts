@@ -29,10 +29,6 @@ export class ThemeService {
 
   readonly set = (setting: ThemeSetting): void => this.#setting.set(setting);
 
-  /** Cycles system → light → dark → system. */
-  readonly cycle = (): void =>
-    this.#setting.update((s) => (s === 'system' ? 'light' : s === 'light' ? 'dark' : 'system'));
-
   #apply = (setting: ThemeSetting): void => {
     if (setting === 'system') delete this.#root.dataset['theme'];
     else this.#root.dataset['theme'] = setting;

@@ -20,23 +20,23 @@ export class DevicesService {
 
   /** `null` while loading. */
   readonly devices = this.#devices.asReadonly();
+  /** Translation key. */
   readonly error = this.#error.asReadonly();
 
   constructor() {
     const unsubscribe = onSnapshot(
       query(devicesCollection(inject(FIRESTORE)), orderBy('createdAt', 'desc')),
-      (snapshot) => {
-        this.#devices.set(snapshot.docs.map((d) => d.data()));
+      snapshot => {
+        this.#devices.set(snapshot.docs.map(d => d.data()));
         this.#error.set(null);
       },
-      () => this.#error.set("Can't load devices. Is the emulator running?"),
+      () => this.#error.set('settings.devices.errors.load'),
     );
     inject(DestroyRef).onDestroy(unsubscribe);
   }
 
   readonly create = async (name: string): Promise<NewDevice> =>
-    (await httpsCallable<{ name: string }, NewDevice>(this.#functions, 'createDevice')({ name }))
-      .data;
+    (await httpsCallable<{ name: string }, NewDevice>(this.#functions, 'createDevice')({ name })).data;
 
   readonly revoke = async (deviceId: string): Promise<void> => {
     await httpsCallable<{ deviceId: string }, { ok: true }>(

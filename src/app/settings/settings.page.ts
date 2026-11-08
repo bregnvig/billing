@@ -1,14 +1,17 @@
 import { Component, inject, signal } from '@angular/core';
 import { form, FormField, maxLength, required } from '@angular/forms/signals';
+import { TranslatePipe } from '@ngx-translate/core';
 import { reportEventUrl } from '../firebase/firebase.config';
+import { LANGUAGES, LanguageService } from '../i18n/language.service';
 import { formatDateTime } from '../ui/format';
+import { ThemeService, ThemeSetting } from '../ui/theme.service';
 import { DevicesService, NewDevice } from './devices.service';
 
 type Copied = 'token' | 'command' | null;
 
 @Component({
   selector: 'app-settings-page',
-  imports: [FormField],
+  imports: [FormField, TranslatePipe],
   templateUrl: './settings.page.html',
 })
 export class SettingsPage {
@@ -17,14 +20,23 @@ export class SettingsPage {
 
   protected readonly devices = this.#devicesService.devices;
   protected readonly loadError = this.#devicesService.error;
-  protected readonly formatDateTime = formatDateTime;
+  protected readonly theme = inject(ThemeService);
+  protected readonly language = inject(LanguageService);
+  protected readonly languages = LANGUAGES;
+  protected readonly themes: readonly { value: ThemeSetting; icon: string }[] = [
+    { value: 'system', icon: 'brightness_auto' },
+    { value: 'light', icon: 'light_mode' },
+    { value: 'dark', icon: 'dark_mode' },
+  ];
+  protected readonly formatDateTime = (d: Date) => formatDateTime(d, this.language.locale());
 
-  protected readonly deviceForm = form(this.#model, (path) => {
-    required(path.name, { message: "Give the device a name, e.g. the computer's hostname." });
-    maxLength(path.name, 50, { message: 'Use at most 50 characters.' });
+  protected readonly deviceForm = form(this.#model, path => {
+    required(path.name, { message: 'settings.devices.nameRequired' });
+    maxLength(path.name, 50, { message: 'settings.devices.nameTooLong' });
   });
 
   protected readonly adding = signal(false);
+  /** Translation key. */
   protected readonly actionError = signal<string | null>(null);
   protected readonly created = signal<(NewDevice & { name: string }) | null>(null);
   protected readonly copied = signal<Copied>(null);
@@ -45,7 +57,7 @@ export class SettingsPage {
       this.#model.set({ name: '' });
       this.deviceForm().reset();
     } catch {
-      this.actionError.set("Couldn't add the device. Is the emulator running with functions?");
+      this.actionError.set('settings.devices.errors.add');
     } finally {
       this.adding.set(false);
     }
@@ -55,9 +67,9 @@ export class SettingsPage {
     try {
       await navigator.clipboard.writeText(text);
       this.copied.set(what);
-      setTimeout(() => this.copied.update((c) => (c === what ? null : c)), 2000);
+      setTimeout(() => this.copied.update(c => (c === what ? null : c)), 2000);
     } catch {
-      this.actionError.set("Couldn't copy. Select the text and copy it manually.");
+      this.actionError.set('settings.devices.errors.copy');
     }
   };
 
@@ -68,7 +80,7 @@ export class SettingsPage {
       await this.#devicesService.revoke(deviceId);
       this.confirmingRevoke.set(null);
     } catch {
-      this.actionError.set("Couldn't revoke the device. Try again.");
+      this.actionError.set('settings.devices.errors.revoke');
     } finally {
       this.revoking.set(null);
     }

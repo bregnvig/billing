@@ -58,8 +58,17 @@ Collections: `projects`, `tasks`, `timeEntries` (owner read/write), `devices`, `
   - Fonts (Roboto, Roboto Mono) and Material Symbols are self-hosted npm packages loaded via `angular.json` `styles`.
 - Firebase JS SDK (Firestore + Auth), exposed through injection tokens in `src/app/firebase/`
 - Vitest for unit tests (`npm test`)
-- Prettier: 100 char width, single quotes, Angular HTML parser
+- Prettier: see `.prettierrc` (140 char width, single quotes, `arrowParens: avoid`)
 - UI look and UX rules: the `ui-design` skill in `.claude/skills/` (Firebase-console style, Loopme teal accent, light + dark)
+
+## Translations (ngx-translate)
+
+- **Every user-facing string goes through ngx-translate**: `{{ 'settings.title' | translate }}` in templates, translation keys (not text) in services and error signals. Includes aria-labels, titles and validation messages.
+- Files: `public/i18n/en.json` and `public/i18n/da.json`, nested keys grouped by feature. **Add every key to both files.** `tools/i18n.spec.ts` (run by `npm run functions:test`) fails if the files differ or a key used in `src/app` is missing.
+- `LanguageService` (`src/app/i18n/`): `en` or `da`, stored per device in `localStorage` (`loopme.lang`), defaulting to the browser language. It's loaded before the first render. Pick it in Settings > Appearance.
+- Dates follow the language: pass `LanguageService.locale()` to the helpers in `src/app/ui/format.ts` (`Thu 5 Nov` / `tors. 5. nov.`). Times (`08:02`) and durations (`7:30`) are the same in both.
+- Plurals: separate `_one` / `_other` keys, chosen in the template.
+- Component tests: `provideTestTranslations()` + `useEnglish()` from `src/app/testing/translations.ts` load the real English file.
 
 ## Code conventions
 

@@ -5,8 +5,7 @@ import { deviceConverter, projectConverter, taskConverter, timeEntryConverter } 
 export const projectsCollection = (db: Firestore): CollectionReference<Project> =>
   collection(db, COLLECTIONS.projects).withConverter(projectConverter);
 
-export const tasksCollection = (db: Firestore): CollectionReference<Task> =>
-  collection(db, COLLECTIONS.tasks).withConverter(taskConverter);
+export const tasksCollection = (db: Firestore): CollectionReference<Task> => collection(db, COLLECTIONS.tasks).withConverter(taskConverter);
 
 export const timeEntriesCollection = (db: Firestore): CollectionReference<TimeEntry> =>
   collection(db, COLLECTIONS.timeEntries).withConverter(timeEntryConverter);

@@ -8,7 +8,9 @@
 /* Scan only the app; docs/skills contain "don't do this" class examples. */
 @source not '../.claude';
 
-@theme {
+/* `static`: always output every token, not just those used by utility classes. Some are only
+   used via var() in SCSS or style bindings (greeting gradient, project colors). */
+@theme static {
   /* Light theme (default values) */
   --color-canvas: #f8f9fa;
   --color-rail: #f1f3f4;
@@ -26,7 +28,7 @@
   --color-unassigned: #b06000;
   --color-danger: #c5221f;
 
-  --color-greet-from: #e37400;
+  --color-greet-from: #c26401;
   --color-greet-to: #d93025;
 
   /* Project palette (keys match ProjectColor in src/app/data/model.ts) */

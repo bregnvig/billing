@@ -42,7 +42,7 @@ describe('timeEntryConverter', () => {
       periods: [...entry.periods].reverse(),
     });
     const restored = timeEntryConverter.fromFirestore(fakeSnapshot(entry.id, data));
-    expect(restored.periods.map((p) => p.id)).toEqual(['p1', 'b1', 'p2']);
+    expect(restored.periods.map(p => p.id)).toEqual(['p1', 'b1', 'p2']);
   });
 });
 

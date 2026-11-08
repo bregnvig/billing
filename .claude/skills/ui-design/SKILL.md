@@ -30,7 +30,7 @@ Also avoid: extra gradients (the only one allowed is the warm greeting heading, 
 
 ## 2. Design tokens
 
-All values come from tokens: the light values are in `src/tailwind.css` under Tailwind 4's `@theme`, and the dark values are in the `dark-tokens` mixin in `src/styles.scss`. The block below shows them together for reference; the files are the source of truth. Never hard-code a color, font size, spacing or radius in a component. If a value is missing, add a token (with both light and dark values) instead.
+All values come from tokens: the light values are in `src/tailwind.css` under Tailwind 4's `@theme`, and the dark values are in the `dark-tokens` mixin in `src/styles.scss`. The block below shows them together for reference; the files are the source of truth. `tailwind.css` uses `@theme static` so every token is output even when no utility class uses it (tokens only used via `var()` in SCSS or style bindings, like the greeting gradient and project colors, would otherwise be missing in light mode). Never hard-code a color, font size, spacing or radius in a component. If a value is missing, add a token (with both light and dark values) instead.
 
 ```css
 @import 'tailwindcss';
@@ -56,7 +56,7 @@ All values come from tokens: the light values are in `src/tailwind.css` under Ta
   --color-danger: #c5221f;
 
   /* Warm greeting gradient: only for the page greeting ("Good morning, …") */
-  --color-greet-from: #e37400;
+  --color-greet-from: #c26401;
   --color-greet-to: #d93025;
 
   /* Type */
@@ -128,7 +128,7 @@ All values come from tokens: the light values are in `src/tailwind.css` under Ta
 
 ### Project palette
 
-Projects store a palette key (`ProjectColor` in `src/app/data/model.ts`), not a hex value. Each key has a light and dark value **and a marker shape**, like the series markers in the Firebase charts, so projects can be told apart without color.
+Projects store a palette key (`ProjectColor` in `model/entities.ts`, imported as `@loopme/model`), not a hex value. Each key has a light and dark value **and a marker shape**, like the series markers in the Firebase charts, so projects can be told apart without color.
 
 | Key | Light | Dark | Marker |
 |---|---|---|---|
@@ -147,7 +147,7 @@ All are >= 3:1 on `surface` in their theme. Define them as `--color-project-<key
 
 Both themes are first-class. The Firebase screenshots are dark, and light follows the same structure with Google's light palette.
 
-- **Three settings**: `Light`, `Dark`, `System` (the default). This is a small control in the rail's bottom/settings menu. The choice is stored in `localStorage` (a per-device preference, so not Firestore) and applied as `data-theme` on `<html>`. `System` removes the attribute so the media query decides.
+- **Three settings**: `Light`, `Dark`, `System` (the default), chosen under Settings > Appearance next to the language. The choice is stored in `localStorage` (a per-device preference, so not Firestore) and applied as `data-theme` on `<html>`. `System` removes the attribute so the media query decides.
 - **Set it before Angular boots**: a tiny inline script in `index.html` reads `localStorage` and sets `data-theme`, so there's no flash of the wrong theme on load. Wrap it in try/catch.
 - **Tokens do the work**: components use token classes (`bg-surface`, `text-ink`, `border-line`) and never Tailwind's `dark:` variant or raw colors. If something looks wrong in one theme, fix the token, not the component.
 - **Layering**:
@@ -202,7 +202,8 @@ Both themes are first-class. The Firebase screenshots are dark, and light follow
 
 ## 5. Formatting
 
-- **UI language**: English.
+- **UI language**: English and Danish via ngx-translate. Never hard-code UI text: every string, aria-label and title is a key in `public/i18n/en.json` and `da.json` (see CLAUDE.md). Write Danish as natural Danish, not word-for-word.
+- **Dates follow the language** (`Thu 5 Nov` / `tors. 5. nov.`), using the helpers in `src/app/ui/format.ts` with `LanguageService.locale()`.
 - **Times**: 24-hour, `HH:mm` (`08:02`).
 - **Durations**: `h:mm` (`7:30`, `0:45`). Never decimals in the UI. Running totals tick once a minute.
 - **Deltas**: signed and muted (`+0:45`, `−1:10`). No green/red for "good/bad", since more hours isn't necessarily good.
@@ -268,3 +269,4 @@ Both themes are first-class. The Firebase screenshots are dark, and light follow
 - [ ] Times and durations use `tabular-nums` and the formats above.
 - [ ] No state or project is shown by color alone.
 - [ ] Button labels are verbs, and errors say how to fix them.
+- [ ] All text is translated, with keys in both `en.json` and `da.json`, and checked in both languages.

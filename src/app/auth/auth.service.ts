@@ -1,11 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import {
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  signInWithPopup,
-  signOut,
-  User,
-} from 'firebase/auth';
+import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
 import { allowedEmail } from '../firebase/firebase.config';
 import { FIREBASE_AUTH } from '../firebase/firebase.providers';
 
@@ -24,7 +18,7 @@ export class AuthService {
   readonly allowed = computed(() => isAllowedUser(this.#user()));
 
   constructor() {
-    onAuthStateChanged(this.#auth, (user) => this.#user.set(user));
+    onAuthStateChanged(this.#auth, user => this.#user.set(user));
   }
 
   /** Resolves once Firebase has restored any saved session. */
