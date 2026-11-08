@@ -3,7 +3,7 @@ import { Device } from '@loopme/model';
 import { onSnapshot, orderBy, query } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { devicesCollection } from '../data/collections';
-import { FIREBASE_FUNCTIONS, FIRESTORE } from '../firebase/firebase.providers';
+import { FIREBASE_FUNCTIONS, FIRESTORE } from '../firebase/firebase-data.providers';
 
 export interface NewDevice {
   deviceId: string;
@@ -11,8 +11,10 @@ export interface NewDevice {
   token: string;
 }
 
-/** Devices allowed to report OS hook events. Writes go through Cloud Functions. */
-@Injectable({ providedIn: 'root' })
+/** Devices allowed to report OS hook events. Writes go through Cloud Functions.
+ * Provided on the lazy shell route (it needs FIRESTORE, which only exists there).
+ */
+@Injectable()
 export class DevicesService {
   readonly #functions = inject(FIREBASE_FUNCTIONS);
   readonly #devices = signal<Device[] | null>(null);

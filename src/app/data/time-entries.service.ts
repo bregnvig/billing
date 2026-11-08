@@ -13,11 +13,13 @@ import {
   timeEntryId,
 } from '@loopme/model';
 import { doc, runTransaction } from 'firebase/firestore';
-import { FIRESTORE } from '../firebase/firebase.providers';
+import { FIRESTORE } from '../firebase/firebase-data.providers';
 import { timeEntriesCollection } from './collections';
 
-/** Writes to time entries. Moves run in a transaction, so a period is never lost or duplicated. */
-@Injectable({ providedIn: 'root' })
+/** Writes to time entries. Moves run in a transaction, so a period is never lost or duplicated.
+ * Provided on the lazy shell route (it needs FIRESTORE, which only exists there).
+ */
+@Injectable()
 export class TimeEntriesService {
   readonly #db = inject(FIRESTORE);
 

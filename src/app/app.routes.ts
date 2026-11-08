@@ -8,22 +8,10 @@ export const routes: Routes = [
     loadComponent: () => import('./auth/login.page').then(m => m.LoginPage),
   },
   {
+    // Lazy: the shell, its pages and Firestore/Functions only load after sign-in.
     path: '',
     canMatch: [authGuard],
-    loadComponent: () => import('./shell/shell').then(m => m.Shell),
-    children: [
-      { path: '', pathMatch: 'full', redirectTo: 'overview' },
-      {
-        path: 'overview',
-        loadComponent: () => import('./overview/overview.page').then(m => m.OverviewPage),
-      },
-      { path: 'week', loadComponent: () => import('./week/week.page').then(m => m.WeekPage) },
-      { path: 'projects', loadComponent: () => import('./projects/projects.page').then(m => m.ProjectsPage) },
-      {
-        path: 'settings',
-        loadComponent: () => import('./settings/settings.page').then(m => m.SettingsPage),
-      },
-    ],
+    loadChildren: () => import('./shell/shell.routes').then(m => m.shellRoutes),
   },
   { path: '**', redirectTo: '' },
 ];

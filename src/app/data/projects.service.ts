@@ -1,15 +1,17 @@
 import { inject, Injectable } from '@angular/core';
 import { COLLECTIONS, DefaultHours, Project, ProjectColor, Task } from '@loopme/model';
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
-import { FIRESTORE } from '../firebase/firebase.providers';
+import { FIRESTORE } from '../firebase/firebase-data.providers';
 import { PROJECT_COLORS } from '../ui/marker';
 import { projectsCollection, tasksCollection } from './collections';
 
 export type ProjectPatch = Partial<Pick<Project, 'name' | 'color' | 'archived'>>;
 export type TaskPatch = Partial<Pick<Task, 'name' | 'defaultHours' | 'archived'>>;
 
-/** Writes to projects and tasks. Read them with `liveProjects()` / `liveTasks()`. */
-@Injectable({ providedIn: 'root' })
+/** Writes to projects and tasks. Read them with `liveProjects()` / `liveTasks()`.
+ * Provided on the lazy shell route (it needs FIRESTORE, which only exists there).
+ */
+@Injectable()
 export class ProjectsService {
   readonly #db = inject(FIRESTORE);
 
