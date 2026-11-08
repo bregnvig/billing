@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 20
     environment:
       name: production
-      url: https://billing-4e274.web.app
+      url: https://billing.loopme.dk
     steps:
       - name: Check credentials
         id: creds
