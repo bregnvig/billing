@@ -1,33 +1,19 @@
-import { FirebaseOptions } from 'firebase/app';
+import { environment } from '../../environments/environment';
 
-/**
- * Fake config for the local Firebase emulator. The `demo-` project ID prefix tells the
- * Firebase SDK and CLI that this is a demo project, so nothing talks to real Google services.
- */
-export const firebaseConfig: FirebaseOptions = {
-  apiKey: 'fake-api-key',
-  authDomain: 'demo-billing.firebaseapp.com',
-  projectId: 'demo-billing',
-  storageBucket: 'demo-billing.appspot.com',
-  messagingSenderId: '000000000000',
-  appId: '1:000000000000:web:0000000000000000000000',
-};
+/** The Firebase project for this build: the emulator in development, billing-4e274 in production. */
+export const firebaseConfig = environment.firebase;
+export const emulators = environment.emulators;
 
-export const emulatorHost = '127.0.0.1';
-export const emulatorPorts = {
-  auth: 9199,
-  firestore: 8180,
-  functions: 5101,
-} as const;
-
-/** Must match `setGlobalOptions({ region })` in functions/src/index.ts. */
+/** Must match the region in functions/src/options.ts. */
 export const functionsRegion = 'europe-west1';
 
-/** URL the OS hook posts events to (emulator for now). */
-export const reportEventUrl = `http://${emulatorHost}:${emulatorPorts.functions}/${firebaseConfig.projectId}/${functionsRegion}/reportEvent`;
+/** URL the OS hook posts events to (shown in Settings when adding a device). */
+export const reportEventUrl = emulators
+  ? `http://${emulators.host}:${emulators.functions}/${firebaseConfig.projectId}/${functionsRegion}/reportEvent`
+  : `https://${functionsRegion}-${firebaseConfig.projectId}.cloudfunctions.net/reportEvent`;
 
 /**
- * The only account allowed to use the app. Also hard-coded in `firestore.rules`
- * (rules can't import app config), so change both together.
+ * The only account allowed to use the app. Also in `firestore.rules` and `OWNER_EMAIL` in
+ * functions/.env (rules and functions can't import app config), so change all three together.
  */
 export const allowedEmail = 'flemming@loopme.dk';

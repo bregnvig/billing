@@ -11,7 +11,8 @@
     "kill-ports": "npx kill-port --port 4100,4410,4510,5101,8180,9199",
     "functions:watch": "npm --prefix functions run build:watch",
     "functions:test": "npm --prefix functions test",
-    "test:e2e": "npm --prefix functions run build && firebase emulators:exec --config firebase.e2e.json --project demo-billing ./e2e/hook-e2e.sh"
+    "test:e2e": "npm --prefix functions run build && firebase emulators:exec --config firebase.e2e.json --project demo-billing ./e2e/hook-e2e.sh",
+    "deploy:prod": "ng build && firebase deploy --project prod"
   },
   "private": true,
   "packageManager": "npm@11.20.0",

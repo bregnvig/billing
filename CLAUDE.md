@@ -5,7 +5,7 @@
 **Loopme** tracks **working hours per weekday**. It has three parts:
 
 1. **Frontend (this Angular app)**: shows the hours worked on each weekday and lets the user edit them.
-2. **Firebase backend**: stores all data in Firestore. For now it runs only in the local emulator (demo project `demo-billing`, fake config).
+2. **Firebase backend**: stores all data in Firestore. Development uses the local emulators (fake demo project `demo-billing`); production is the real project **`billing-4e274`** (alias `prod` in `.firebaserc`).
 3. **OS hooks**: small scripts/hooks on the user's machine that report when they *think* a workday started and stopped (e.g. login/unlock, logout/lock/suspend). These are best-effort guesses, so the UI is where they get corrected.
 
 ## Domain model
@@ -80,12 +80,20 @@ Collections: `projects`, `tasks`, `timeEntries` (owner read/write), `devices`, `
 - **Forms**: always `<form novalidate>`. Signal forms add native `required` attributes, and without `novalidate` the browser blocks submit before Angular sees it, so our own error messages never show. Show "required" errors only after a save attempt; format errors once a field is left.
 - Prefer `inject()` over constructor parameters, so services end up as `readonly #db = inject(FIRESTORE)`.
 
+## Environments
+
+- `src/environments/environment.ts` = production (`billing-4e274`, no emulators). `environment.development.ts` = emulators, swapped in by `angular.json` `fileReplacements` for the `development` configuration (`ng serve`).
+- After changing `angular.json`, restart `ng serve`: a running dev server doesn't pick it up, and would build with the production environment.
+- `src/app/firebase/firebase.config.ts` derives everything (emulator connections, the hook's `reportEventUrl`) from the environment.
+- Analytics is deliberately not included (cookies need consent in the EU).
+
 ## Commands
 
 - `npm run emulators`: build the functions and start the Firebase emulators (UI at http://127.0.0.1:4100, Firestore 8180, Auth 9199, Functions 5101). Data is saved to `.firebase-data/` on exit. The ports are non-default because the F2020 project's emulator uses the defaults.
 - `npm run kill-ports`: force-kills whatever listens on this project's emulator ports (same approach as F2020, via `kill-port`). It's `kill -9`, so the emulator does **not** export data; prefer Ctrl+C and use this only when the emulator won't die.
 - `npm start`: dev server (`ng serve`). Expects the emulators to be running
-- `npm run build`: production build
+- `npm run build`: production build (real project)
+- `npm run deploy:prod`: production build + `firebase deploy --project prod` (Hosting, Firestore rules, Functions). Needs `firebase login` and the Blaze plan for Functions
 - `npm test`: run the web app's unit tests
 - `npm run functions:test`: unit tests for the functions and the shared model
 - `npm run functions:watch`: rebuild the functions on change (the emulator picks them up)

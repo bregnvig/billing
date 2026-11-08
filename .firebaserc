@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "demo-billing"
+    "default": "demo-billing",
+    "prod": "billing-4e274"
   }
 }

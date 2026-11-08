@@ -3,7 +3,7 @@ import { FirebaseApp, initializeApp } from 'firebase/app';
 import { Auth, connectAuthEmulator, getAuth } from 'firebase/auth';
 import { connectFirestoreEmulator, Firestore, getFirestore } from 'firebase/firestore';
 import { connectFunctionsEmulator, Functions, getFunctions } from 'firebase/functions';
-import { emulatorHost, emulatorPorts, firebaseConfig, functionsRegion } from './firebase.config';
+import { emulators, firebaseConfig, functionsRegion } from './firebase.config';
 
 export const FIREBASE_APP = new InjectionToken<FirebaseApp>('FIREBASE_APP');
 export const FIRESTORE = new InjectionToken<Firestore>('FIRESTORE');
@@ -14,15 +14,15 @@ export const provideFirebase = (): EnvironmentProviders => {
   const app = initializeApp(firebaseConfig);
 
   const firestore = getFirestore(app);
-  connectFirestoreEmulator(firestore, emulatorHost, emulatorPorts.firestore);
-
   const auth = getAuth(app);
-  connectAuthEmulator(auth, `http://${emulatorHost}:${emulatorPorts.auth}`, {
-    disableWarnings: true,
-  });
-
   const functions = getFunctions(app, functionsRegion);
-  connectFunctionsEmulator(functions, emulatorHost, emulatorPorts.functions);
+
+  // Development builds talk to the local emulators; production to the real project.
+  if (emulators) {
+    connectFirestoreEmulator(firestore, emulators.host, emulators.firestore);
+    connectAuthEmulator(auth, `http://${emulators.host}:${emulators.auth}`, { disableWarnings: true });
+    connectFunctionsEmulator(functions, emulators.host, emulators.functions);
+  }
 
   return makeEnvironmentProviders([
     { provide: FIREBASE_APP, useValue: app },
