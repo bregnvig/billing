@@ -56,7 +56,10 @@ Collections: `projects`, `tasks`, `timeEntries` (owner read/write), `devices`, `
   - `src/tailwind.css` is the one plain-CSS file: Tailwind 4 doesn't support Sass, so its `@import`, `@source` and `@theme` tokens (light values) live there.
   - `src/styles.scss` holds everything else: the `dark-tokens` mixin, base styles, icons. Component styles are `.scss` too.
   - Fonts (Roboto, Roboto Mono) and Material Symbols are self-hosted npm packages loaded via `angular.json` `styles`.
-- Firebase JS SDK (Firestore + Auth), exposed through injection tokens in `src/app/firebase/`
+- Firebase JS SDK, exposed through injection tokens in `src/app/firebase/`:
+  - `firebase.providers.ts` (startup, root): only the app and **Auth** (`FIREBASE_APP`, `FIREBASE_AUTH`), since the guards need Auth right away.
+  - `firebase-data.providers.ts` (lazy): **Firestore and Functions** (`FIRESTORE`, `FIREBASE_FUNCTIONS`), provided on the lazy shell route (`shell/shell.routes.ts`) with the services that use them (`ProjectsService`, `TimeEntriesService`, `DevicesService`). That keeps ~580 kB of SDK out of the initial bundle.
+  - **Never import `firebase/firestore` or `firebase/functions` (or `firebase-data.providers.ts`) from startup code** (app.config, root services, guards, login): it pulls them back into `main`. Services that need Firestore are `@Injectable()` and listed in the shell route's providers, not `providedIn: 'root'`.
 - Vitest for unit tests (`npm test`)
 - Prettier: see `.prettierrc` (140 char width, single quotes, `arrowParens: avoid`)
 - UI look and UX rules: the `ui-design` skill in `.claude/skills/` (Firebase-console style, Loopme teal accent, light + dark)

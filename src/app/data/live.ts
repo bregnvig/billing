@@ -1,7 +1,7 @@
 import { DestroyRef, effect, inject, signal, Signal } from '@angular/core';
 import { IsoDate, Project, Task, TimeEntry } from '@loopme/model';
 import { onSnapshot, orderBy, query, where } from 'firebase/firestore';
-import { FIRESTORE } from '../firebase/firebase.providers';
+import { FIRESTORE } from '../firebase/firebase-data.providers';
 import { projectsCollection, tasksCollection, timeEntriesCollection } from './collections';
 
 export interface Live<T> {
