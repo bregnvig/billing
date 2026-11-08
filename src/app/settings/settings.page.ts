@@ -5,6 +5,7 @@ import { reportEventUrl } from '../firebase/firebase.config';
 import { LANGUAGES, LanguageService } from '../i18n/language.service';
 import { formatDateTime } from '../ui/format';
 import { ThemeService, ThemeSetting } from '../ui/theme.service';
+import { Consent, ConsentService } from '../privacy/consent.service';
 import { DevicesService, NewDevice } from './devices.service';
 
 type Copied = 'token' | 'command' | null;
@@ -22,6 +23,8 @@ export class SettingsPage {
   protected readonly loadError = this.#devicesService.error;
   protected readonly theme = inject(ThemeService);
   protected readonly language = inject(LanguageService);
+  protected readonly consent = inject(ConsentService);
+  protected readonly consentOptions: readonly Consent[] = ['granted', 'denied'];
   protected readonly languages = LANGUAGES;
   protected readonly themes: readonly { value: ThemeSetting; icon: string }[] = [
     { value: 'system', icon: 'brightness_auto' },

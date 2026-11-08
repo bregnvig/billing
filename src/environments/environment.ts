@@ -14,6 +14,7 @@ export const environment: Environment = {
     storageBucket: 'billing-4e274.firebasestorage.app',
     messagingSenderId: '1079329898985',
     appId: '1:1079329898985:web:2732ef93fb58c434664b78',
+    measurementId: 'G-1CGCFBY0ND',
   },
   emulators: null,
 };

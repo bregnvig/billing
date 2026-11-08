@@ -60,6 +60,47 @@
     </div>
   </section>
 
+  <section id="privacy" class="mt-10 scroll-mt-8" aria-labelledby="privacy-title">
+    <h2 id="privacy-title" class="text-xl font-normal text-muted">{{ 'consent.settings.title' | translate }}</h2>
+    <p class="mt-1 text-muted">{{ 'consent.settings.description' | translate }}</p>
+    <div class="mt-4 divide-y divide-line rounded-lg border border-line bg-surface">
+      <fieldset class="flex flex-wrap items-center justify-between gap-3 p-6">
+        <legend class="sr-only">{{ 'consent.settings.analytics' | translate }}</legend>
+        <div aria-hidden="true">
+          <p class="font-medium">{{ 'consent.settings.analytics' | translate }}</p>
+          <p class="mt-1 text-xs text-muted">{{ 'consent.settings.analyticsHint' | translate }}</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          @for (option of consentOptions; track option) {
+          <label
+            class="flex h-9 cursor-pointer items-center rounded-full border px-4 transition-colors duration-150 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent"
+            [class.border-accent]="consent.choice() === option"
+            [class.bg-accent-soft]="consent.choice() === option"
+            [class.text-accent]="consent.choice() === option"
+            [class.border-line]="consent.choice() !== option"
+            [class.hover:bg-raised]="consent.choice() !== option">
+            <input
+              type="radio"
+              name="analytics-consent"
+              class="sr-only"
+              [value]="option"
+              [checked]="consent.choice() === option"
+              (change)="consent.set(option)" />
+            {{ 'consent.settings.' + option | translate }}
+          </label>
+          }
+        </div>
+      </fieldset>
+      <div class="p-6 text-xs text-muted">
+        <p class="font-medium text-ink">{{ 'consent.settings.necessaryTitle' | translate }}</p>
+        <p class="mt-1">{{ 'consent.settings.necessary' | translate }}</p>
+        @if (!consent.analyticsAvailable) {
+        <p class="mt-2">{{ 'consent.settings.devNote' | translate }}</p>
+        }
+      </div>
+    </div>
+  </section>
+
   <section class="mt-10" aria-labelledby="devices-title">
     <h2 id="devices-title" class="text-xl font-normal text-muted">{{ 'settings.devices.title' | translate }}</h2>
     <p class="mt-1 text-muted">{{ 'settings.devices.description' | translate }}</p>

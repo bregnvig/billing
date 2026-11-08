@@ -85,7 +85,7 @@ Collections: `projects`, `tasks`, `timeEntries` (owner read/write), `devices`, `
 - `src/environments/environment.ts` = production (`billing-4e274`, no emulators). `environment.development.ts` = emulators, swapped in by `angular.json` `fileReplacements` for the `development` configuration (`ng serve`).
 - After changing `angular.json`, restart `ng serve`: a running dev server doesn't pick it up, and would build with the production environment.
 - `src/app/firebase/firebase.config.ts` derives everything (emulator connections, the hook's `reportEventUrl`) from the environment.
-- Analytics is deliberately not included (cookies need consent in the EU).
+- **Analytics (GA4 via Firebase) only with consent**: `ConsentService` (`src/app/privacy/`) lazily imports `firebase/analytics` only after "Allow"; before that no Google script or cookie exists. Declining/withdrawing disables collection and deletes `_ga` cookies. The banner (`ConsentBanner`, in the root `App`) shows until a choice is made; Allow and decline have equal weight. Change it in Settings › Privacy. Only production has a `measurementId`, so development never sends anything. Bump `VERSION` in the service when what's collected changes, so everyone is asked again.
 
 ## Commands
 

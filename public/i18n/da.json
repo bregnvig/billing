@@ -252,5 +252,23 @@
       },
       "save": "Kunne ikke gemme. Tjek forbindelsen, og prøv igen."
     }
+  },
+  "consent": {
+    "title": "Cookies til statistik",
+    "text": "Loopme kan bruge Google Analytics (via Firebase) til at se, hvordan appen bruges. Det sætter cookies og sender brugsdata til Google, så det sker kun, hvis du tillader det. Alt andet virker uanset hvad.",
+    "allow": "Tillad statistik",
+    "decline": "Kun nødvendige",
+    "more": "Mere under Indstillinger",
+    "settings": {
+      "title": "Privatliv",
+      "description": "Dit valg gemmes kun på denne enhed. Du kan ændre det når som helst.",
+      "analytics": "Statistik (Google Analytics)",
+      "analyticsHint": "Brugsdata og cookies (_ga) sendes til Google. Slår du det fra, slettes cookies.",
+      "granted": "Tilladt",
+      "denied": "Ikke tilladt",
+      "necessaryTitle": "Altid slået til (nødvendige)",
+      "necessary": "Din login-session (Firebase), tema, sprog og dette valg gemmes på din enhed, så appen virker. De bruges ikke til sporing og deles ikke.",
+      "devNote": "Dette er en udviklingsversion: her sendes aldrig statistik, uanset hvad du vælger."
+    }
   }
 }

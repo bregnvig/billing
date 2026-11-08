@@ -252,5 +252,23 @@
       },
       "save": "Couldn't save. Check your connection and try again."
     }
+  },
+  "consent": {
+    "title": "Cookies for statistics",
+    "text": "Loopme can use Google Analytics (via Firebase) to see how the app is used. That sets cookies and sends usage data to Google, so it only happens if you allow it. Everything else works either way.",
+    "allow": "Allow statistics",
+    "decline": "Only necessary",
+    "more": "More in Settings",
+    "settings": {
+      "title": "Privacy",
+      "description": "Your choice is stored on this device only. You can change it at any time.",
+      "analytics": "Statistics (Google Analytics)",
+      "analyticsHint": "Usage data and cookies (_ga) sent to Google. Turning it off deletes the cookies.",
+      "granted": "Allowed",
+      "denied": "Not allowed",
+      "necessaryTitle": "Always on (necessary)",
+      "necessary": "Your sign-in session (Firebase), theme, language and this choice are stored on your device so the app works. They aren't used for tracking and aren't shared.",
+      "devNote": "This is a development build: no analytics is ever sent here, whatever you choose."
+    }
   }
 }
