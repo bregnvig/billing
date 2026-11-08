@@ -87,6 +87,13 @@ Collections: `projects`, `tasks`, `timeEntries` (owner read/write), `devices`, `
 - `src/app/firebase/firebase.config.ts` derives everything (emulator connections, the hook's `reportEventUrl`) from the environment.
 - **Analytics (GA4 via Firebase) only with consent**: `ConsentService` (`src/app/privacy/`) lazily imports `firebase/analytics` only after "Allow"; before that no Google script or cookie exists. Declining/withdrawing disables collection and deletes `_ga` cookies. The banner (`ConsentBanner`, in the root `App`) shows until a choice is made; Allow and decline have equal weight. Change it in Settings › Privacy. Only production has a `measurementId`, so development never sends anything. Bump `VERSION` in the service when what's collected changes, so everyone is asked again.
 
+## Git, CI and deploy
+
+- GitHub: `git@github.com:bregnvig/billing.git` (public). `main` is protected: changes go through a **branch + pull request**.
+- **CI** (`.github/workflows/ci.yml`) runs on every pull request to `main`: production build, web unit tests, functions build and the Node-side tests (functions, model, translations). It must pass before merging.
+- **Deploy** (`.github/workflows/deploy.yml`) runs on every push to `main` (and manually): CI first, then `firebase deploy --project prod` (Hosting, Firestore rules, Functions).
+- The deploy needs the repository secret `FIREBASE_SERVICE_ACCOUNT`: a JSON key for a Google Cloud service account in `billing-4e274` with the roles Firebase Admin, Cloud Functions Admin, Cloud Run Admin, Artifact Registry Administrator and Service Account User. Set it with `gh secret set FIREBASE_SERVICE_ACCOUNT < key.json`, then delete the local key file. Without it, the deploy job is skipped with a warning.
+
 ## Commands
 
 - `npm run emulators`: build the functions and start the Firebase emulators (UI at http://127.0.0.1:4100, Firestore 8180, Auth 9199, Functions 5101). Data is saved to `.firebase-data/` on exit. The ports are non-default because the F2020 project's emulator uses the defaults.
