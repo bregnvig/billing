@@ -1,0 +1,48 @@
+# Build and unit tests. Required to pass before a pull request can be merged into main
+# (ruleset on main), and reused by the deploy workflow before every deploy.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build and unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+
+      - name: Install
+        run: |
+          npm ci
+          npm ci --prefix functions
+
+      - name: Build web app (production)
+        run: npm run build
+
+      - name: Unit tests – web app
+        run: npm test -- --watch=false
+
+      - name: Build functions (type-check + bundle)
+        run: npm --prefix functions run build
+
+      - name: Unit tests – functions, shared model, translation checks
+        run: npm run functions:test
