@@ -40,7 +40,20 @@
     }
   </div>
   }
-  <p class="mt-3 text-xs text-muted">{{ 'weekView.shortcuts' | translate }}</p>
+  <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+    <p class="flex-1 text-xs text-muted">{{ 'weekView.shortcuts' | translate }}</p>
+    @if (loaded() && hasCollapsible()) {
+    <button
+      type="button"
+      class="flex h-8 items-center gap-1 rounded-full px-3 text-xs text-muted transition-colors duration-150 hover:bg-raised hover:text-ink"
+      (click)="toggleAll()">
+      <span class="material-symbols-outlined text-base leading-none" aria-hidden="true">
+        {{ allOpen() ? 'unfold_less' : 'unfold_more' }}
+      </span>
+      {{ (allOpen() ? 'weekView.closeAll' : 'weekView.openAll') | translate }}
+    </button>
+    }
+  </div>
 
   @if (error() || actionError(); as key) {
   <div class="mt-6 flex gap-3 rounded-lg border border-danger bg-surface p-4" role="alert">
@@ -52,21 +65,57 @@
     @for (day of days(); track day.date) {
     <section
       class="rounded-lg border bg-surface"
-      [class.p-6]="day.rows.length"
-      [class.px-6]="!day.rows.length"
-      [class.py-4]="!day.rows.length"
+      [class.p-6]="day.rows.length && day.open"
+      [class.px-6]="!day.rows.length || !day.open"
+      [class.py-4]="!day.rows.length || !day.open"
       [class.border-accent]="day.isToday"
       [class.border-line]="!day.isToday"
       [attr.aria-label]="day.longTitle">
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+        @if (day.collapsible) {
+        <h2 class="min-w-0 flex-1">
+          <button
+            type="button"
+            class="-mx-2 flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-md px-2 py-1 text-left transition-colors duration-150 hover:bg-raised"
+            [attr.aria-expanded]="day.open"
+            [attr.aria-controls]="'day-body-' + day.date"
+            (click)="toggleDay(day.date, day.open)">
+            <span class="flex items-center gap-2 text-base font-medium">
+              <span
+                class="material-symbols-outlined text-muted transition-transform duration-150"
+                [class.rotate-90]="day.open"
+                aria-hidden="true">
+                chevron_right
+              </span>
+              {{ day.title }}
+            </span>
+            <span class="text-xl tabular-nums">{{ duration(day.work) }}</span>
+            @if (!day.open) {
+            <span class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+              @for (project of day.breakdown; track project.name) {
+              <span class="flex items-center gap-1">
+                <app-marker [color]="project.color" />
+                {{ project.name }}
+                <span class="tabular-nums">{{ duration(project.work) }}</span>
+              </span>
+              }
+            </span>
+            } @if (day.unassigned >= minute) {
+            <span class="rounded-full border border-unassigned px-2 py-0.5 text-xs tabular-nums">
+              {{ 'overview.unassigned' | translate: { duration: duration(day.unassigned) } }}
+            </span>
+            }
+          </button>
+        </h2>
+        } @else {
         <h2 class="flex items-center gap-2 text-base font-medium">
           <span class="material-symbols-outlined text-muted" aria-hidden="true">{{ day.isToday ? 'today' : 'calendar_today' }}</span>
           {{ day.title }}
         </h2>
         <span class="text-xl tabular-nums" [class.text-muted]="day.work === 0">{{ duration(day.work) }}</span>
-        @if (!day.rows.length) {
+        } @if (!day.rows.length) {
         <span class="text-muted">{{ 'weekView.noTime' | translate }}</span>
-        } @if (day.unassigned >= minute) {
+        } @if (!day.collapsible && day.unassigned >= minute) {
         <span class="rounded-full border border-unassigned px-2 py-0.5 text-xs tabular-nums">
           {{ 'overview.unassigned' | translate: { duration: duration(day.unassigned) } }}
         </span>
@@ -114,36 +163,37 @@
         [allowUnassign]="false"
         (picked)="onPicked($event)"
         (cancelled)="closePicker('all-' + day.date)" />
-      } @if (day.rows.length) {
-      <app-day-timeline [day]="day.start" [periods]="day.rows" [now]="now()" />
-      <ul class="mt-4 divide-y divide-line border-t border-line">
-        @for (item of day.items; track item.id) { @if (item.kind === 'gap') {
-        <li class="flex min-h-12 flex-wrap items-center gap-x-4 gap-y-1 px-2 py-2 text-muted">
-          <span class="flex min-w-40 flex-1 items-center gap-2">
-            <span class="gap-swatch size-3 rounded-sm" aria-hidden="true"></span>
-            {{ 'weekView.gap' | translate }}
-          </span>
-          <span class="tabular-nums">{{ item.startText }} – {{ item.endText }}</span>
-          <span class="w-12 text-right tabular-nums">{{ duration(item.durationMs) }}</span>
-          <button
-            type="button"
-            class="flex h-9 items-center gap-1 rounded-full px-3 text-accent transition-colors duration-150 hover:bg-accent-soft disabled:opacity-60"
-            [disabled]="busy()"
-            [attr.aria-label]="'weekView.countGapAria' | translate: { start: item.startText, end: item.endText }"
-            (click)="countGapAsWork(day.date, item)">
-            <span class="material-symbols-outlined" aria-hidden="true">work</span>
-            {{ 'weekView.countAsWork' | translate }}
-          </button>
-        </li>
-        } @else {
-        <li>
-          <div class="flex items-center transition-colors duration-150 hover:bg-raised">
+      } @if (day.rows.length && day.open) {
+      <div [id]="'day-body-' + day.date">
+        <app-day-timeline [day]="day.start" [periods]="day.rows" [now]="now()" />
+        <ul class="mt-4 divide-y divide-line border-t border-line">
+          @for (item of day.items; track item.id) { @if (item.kind === 'gap') {
+          <li class="flex min-h-12 flex-wrap items-center gap-x-4 gap-y-1 px-2 py-2 text-muted">
+            <span class="flex min-w-40 flex-1 items-center gap-2">
+              <span class="gap-swatch size-3 rounded-sm" aria-hidden="true"></span>
+              {{ 'weekView.gap' | translate }}
+            </span>
+            <span class="tabular-nums">{{ item.startText }} – {{ item.endText }}</span>
+            <span class="w-12 text-right tabular-nums">{{ duration(item.durationMs) }}</span>
             <button
               type="button"
-              [id]="item.id"
-              class="flex min-h-12 flex-1 flex-wrap items-center gap-x-4 gap-y-1 px-2 py-2 text-left"
-              [attr.aria-expanded]="editing()?.key === item.id"
-              [attr.aria-label]="
+              class="flex h-9 items-center gap-1 rounded-full px-3 text-accent transition-colors duration-150 hover:bg-accent-soft disabled:opacity-60"
+              [disabled]="busy()"
+              [attr.aria-label]="'weekView.countGapAria' | translate: { start: item.startText, end: item.endText }"
+              (click)="countGapAsWork(day.date, item)">
+              <span class="material-symbols-outlined" aria-hidden="true">work</span>
+              {{ 'weekView.countAsWork' | translate }}
+            </button>
+          </li>
+          } @else {
+          <li>
+            <div class="flex items-center transition-colors duration-150 hover:bg-raised">
+              <button
+                type="button"
+                [id]="item.id"
+                class="flex min-h-12 flex-1 flex-wrap items-center gap-x-4 gap-y-1 px-2 py-2 text-left"
+                [attr.aria-expanded]="editing()?.key === item.id"
+                [attr.aria-label]="
                 'weekView.periodAria'
                   | translate
                     : {
@@ -153,60 +203,61 @@
                         duration: duration(item.durationMs),
                       }
               "
-              (click)="openPicker(item.id, [item.ref])"
-              (keydown)="onRowKeydown($event, item)">
-              <span class="flex min-w-40 flex-1 items-center gap-2">
-                @if (item.type === 'break') {
-                <span class="material-symbols-outlined text-muted" aria-hidden="true">coffee</span>
-                <span class="text-muted">{{ 'timeline.break' | translate }}</span>
-                } @else if (item.color) {
-                <app-marker [color]="item.color" />
-                {{ item.label }} } @else {
-                <span class="size-3 rounded-full border-2 border-unassigned" aria-hidden="true"></span>
-                <span class="text-muted">{{ item.labelKey! | translate }}</span>
+                (click)="openPicker(item.id, [item.ref])"
+                (keydown)="onRowKeydown($event, item)">
+                <span class="flex min-w-40 flex-1 items-center gap-2">
+                  @if (item.type === 'break') {
+                  <span class="material-symbols-outlined text-muted" aria-hidden="true">coffee</span>
+                  <span class="text-muted">{{ 'timeline.break' | translate }}</span>
+                  } @else if (item.color) {
+                  <app-marker [color]="item.color" />
+                  {{ item.label }} } @else {
+                  <span class="size-3 rounded-full border-2 border-unassigned" aria-hidden="true"></span>
+                  <span class="text-muted">{{ item.labelKey! | translate }}</span>
+                  }
+                </span>
+                <span class="tabular-nums text-muted">{{ item.startText }} – {{ item.endText ?? ('weekView.now' | translate) }}</span>
+                <span class="w-12 text-right tabular-nums" [class.text-muted]="item.type === 'break'">{{ duration(item.durationMs) }}</span>
+                @if (!item.end) {
+                <span class="flex items-center gap-1.5 rounded-full border border-running px-2 py-0.5 text-xs">
+                  <span class="size-1.5 rounded-full bg-running" aria-hidden="true"></span>
+                  {{ 'weekView.running' | translate }}
+                </span>
                 }
-              </span>
-              <span class="tabular-nums text-muted">{{ item.startText }} – {{ item.endText ?? ('weekView.now' | translate) }}</span>
-              <span class="w-12 text-right tabular-nums" [class.text-muted]="item.type === 'break'">{{ duration(item.durationMs) }}</span>
-              @if (!item.end) {
-              <span class="flex items-center gap-1.5 rounded-full border border-running px-2 py-0.5 text-xs">
-                <span class="size-1.5 rounded-full bg-running" aria-hidden="true"></span>
-                {{ 'weekView.running' | translate }}
-              </span>
-              }
-              <span class="material-symbols-outlined text-muted" aria-hidden="true">edit</span>
-            </button>
-            <button
-              type="button"
-              class="mr-1 flex size-9 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-150 hover:bg-surface hover:text-ink disabled:opacity-60"
-              [disabled]="busy()"
-              [attr.aria-label]="(item.type === 'break' ? 'weekView.countAsWorkAria' : 'weekView.markAsBreakAria') | translate: { start: item.startText }"
-              [title]="(item.type === 'break' ? 'weekView.countAsWork' : 'weekView.markAsBreak') | translate"
-              (click)="toggleType(item)">
-              <span class="material-symbols-outlined" aria-hidden="true">{{ item.type === 'break' ? 'work' : 'coffee' }}</span>
-            </button>
-            <button
-              type="button"
-              class="mr-1 flex size-9 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-150 hover:bg-surface hover:text-danger disabled:opacity-60"
-              [disabled]="busy()"
-              [attr.aria-label]="'weekView.deleteAria' | translate: { start: item.startText, end: item.endText ?? ('weekView.now' | translate) }"
-              [title]="'weekView.delete' | translate"
-              (click)="deleteRow(item)">
-              <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-            </button>
-          </div>
-          @if (editing()?.key === item.id) {
-          <app-project-picker
-            class="my-2"
-            [projects]="projects()"
-            [tasks]="tasks()"
-            [allowUnassign]="item.projectId !== null"
-            (picked)="onPicked($event)"
-            (cancelled)="closePicker(item.id)" />
-          }
-        </li>
-        } }
-      </ul>
+                <span class="material-symbols-outlined text-muted" aria-hidden="true">edit</span>
+              </button>
+              <button
+                type="button"
+                class="mr-1 flex size-9 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-150 hover:bg-surface hover:text-ink disabled:opacity-60"
+                [disabled]="busy()"
+                [attr.aria-label]="(item.type === 'break' ? 'weekView.countAsWorkAria' : 'weekView.markAsBreakAria') | translate: { start: item.startText }"
+                [title]="(item.type === 'break' ? 'weekView.countAsWork' : 'weekView.markAsBreak') | translate"
+                (click)="toggleType(item)">
+                <span class="material-symbols-outlined" aria-hidden="true">{{ item.type === 'break' ? 'work' : 'coffee' }}</span>
+              </button>
+              <button
+                type="button"
+                class="mr-1 flex size-9 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-150 hover:bg-surface hover:text-danger disabled:opacity-60"
+                [disabled]="busy()"
+                [attr.aria-label]="'weekView.deleteAria' | translate: { start: item.startText, end: item.endText ?? ('weekView.now' | translate) }"
+                [title]="'weekView.delete' | translate"
+                (click)="deleteRow(item)">
+                <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+              </button>
+            </div>
+            @if (editing()?.key === item.id) {
+            <app-project-picker
+              class="my-2"
+              [projects]="projects()"
+              [tasks]="tasks()"
+              [allowUnassign]="item.projectId !== null"
+              (picked)="onPicked($event)"
+              (cancelled)="closePicker(item.id)" />
+            }
+          </li>
+          } }
+        </ul>
+      </div>
       }
     </section>
     }

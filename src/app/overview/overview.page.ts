@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import {
   addDays,
   Assignment,
+  PeriodRef,
   dailyTotals,
   datesBetween,
   daysInMonth,
@@ -130,11 +131,24 @@ export class OverviewPage {
   protected readonly projectList = computed(() => this.#projects.value() ?? []);
   protected readonly taskList = computed(() => this.#tasks.value() ?? []);
   /** Today's unassigned work periods. */
-  readonly #unassignedRefs = computed(() =>
+  /** Today's unassigned work periods, oldest first, as rows for the popover. */
+  protected readonly unassignedRows = computed(() =>
     this.#list()
       .filter(e => e.date === this.today() && e.projectId === null)
-      .flatMap(e => e.periods.filter(p => p.type === 'work').map(p => ({ entryId: e.id, periodId: p.id }))),
+      .flatMap(e =>
+        e.periods
+          .filter(p => p.type === 'work')
+          .map(p => ({
+            ref: { entryId: e.id, periodId: p.id },
+            start: p.start,
+            startText: formatTime(p.start),
+            endText: p.end ? formatTime(p.end) : null,
+            durationMs: (p.end ?? this.now()).getTime() - p.start.getTime(),
+          })),
+      )
+      .sort((a, b) => a.start.getTime() - b.start.getTime()),
   );
+  readonly #unassignedRefs = computed(() => this.unassignedRows().map(r => r.ref));
   protected readonly unassignedCount = computed(() => this.#unassignedRefs().length);
 
   protected readonly closeAssign = (returnFocus = false): void => {
@@ -146,6 +160,31 @@ export class OverviewPage {
   /** Closes the popover on a click outside it. */
   protected readonly onDocumentPointerDown = (event: PointerEvent): void => {
     if (this.assignOpen() && !(event.target as HTMLElement).closest('.assign-popover-anchor')) this.closeAssign();
+  };
+
+  /** Deletes one unassigned period (Undo restores it); closes the popover when none are left. */
+  protected readonly deleteUnassigned = async (row: { ref: PeriodRef; startText: string; endText: string | null }): Promise<void> => {
+    if (this.assigning()) return;
+    this.assigning.set(true);
+    this.assignError.set(null);
+    try {
+      const undo = await this.#entriesService.deletePeriod(row.ref);
+      this.#toasts.show({
+        message: 'weekView.deleted',
+        params: { start: row.startText, end: row.endText ?? formatTime(this.now()) },
+        actionLabel: 'weekView.undo',
+        action: () => undo(),
+      });
+      if (this.#unassignedRefs().every(r => r.periodId === row.ref.periodId)) {
+        // Nothing left, so the badge disappears: put focus on the toast's Undo instead.
+        this.closeAssign();
+        setTimeout(() => document.querySelector<HTMLElement>('app-toast-host [role=status] button')?.focus());
+      }
+    } catch {
+      this.assignError.set('weekView.errors.save');
+    } finally {
+      this.assigning.set(false);
+    }
   };
 
   protected readonly assignToday = async (result: PickerResult): Promise<void> => {

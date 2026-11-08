@@ -57,7 +57,8 @@
     "assignUnassigned": "Tildel {{duration}} ikke tildelt tid",
     "assignTitle": "Tildel dagens ikke tildelte tid",
     "assignHint": "Tildel {{count}} ikke tildelte periode(r) fra i dag ({{duration}}) til:",
-    "openInWeek": "Åbn i ugevisning"
+    "openInWeek": "Åbn i ugevisning",
+    "unassignedPeriods": "Ikke tildelte perioder i dag"
   },
   "timeline": {
     "periods": "{{count}} perioder",
@@ -160,7 +161,9 @@
     "markedAsBreak": "{{start}}–{{end}} markeret som pause",
     "delete": "Slet",
     "deleteAria": "Slet perioden {{start}}–{{end}}",
-    "deleted": "Periode {{start}}–{{end}} slettet"
+    "deleted": "Periode {{start}}–{{end}} slettet",
+    "openAll": "Åbn alle dage",
+    "closeAll": "Luk tidligere dage"
   },
   "picker": {
     "search": "Søg i projekter",

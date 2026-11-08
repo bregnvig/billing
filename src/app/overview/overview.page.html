@@ -51,6 +51,29 @@
             role="dialog"
             class="absolute top-full left-0 z-40 mt-2 w-80 rounded-lg border border-line bg-surface p-3 shadow-lg"
             [attr.aria-label]="'overview.assignTitle' | translate">
+            <ul
+              class="mb-3 max-h-48 divide-y divide-line overflow-y-auto rounded-md border border-line"
+              [attr.aria-label]="'overview.unassignedPeriods' | translate">
+              @for (row of unassignedRows(); track row.ref.periodId) {
+              <li class="flex items-center gap-2 py-1 pr-1 pl-3">
+                <span class="size-2.5 rounded-full border-2 border-unassigned" aria-hidden="true"></span>
+                <span class="flex-1 tabular-nums">{{ row.startText }} – {{ row.endText ?? ('weekView.now' | translate) }}</span>
+                @if (!row.endText) {
+                <span class="rounded-full border border-running px-1.5 text-xs">{{ 'weekView.running' | translate }}</span>
+                }
+                <span class="w-10 text-right tabular-nums text-muted">{{ duration(row.durationMs) }}</span>
+                <button
+                  type="button"
+                  class="flex size-8 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-150 hover:bg-raised hover:text-danger disabled:opacity-60"
+                  [disabled]="assigning()"
+                  [attr.aria-label]="'weekView.deleteAria' | translate: { start: row.startText, end: row.endText ?? ('weekView.now' | translate) }"
+                  [title]="'weekView.delete' | translate"
+                  (click)="deleteUnassigned(row)">
+                  <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                </button>
+              </li>
+              }
+            </ul>
             <p class="px-1 pb-2 text-xs text-muted">
               {{ 'overview.assignHint' | translate: { count: unassignedCount(), duration: duration(todayUnassigned()) } }}
             </p>

@@ -57,7 +57,8 @@
     "assignUnassigned": "Assign {{duration}} of unassigned time",
     "assignTitle": "Assign today's unassigned time",
     "assignHint": "Assign {{count}} unassigned period(s) from today ({{duration}}) to:",
-    "openInWeek": "Open in week view"
+    "openInWeek": "Open in week view",
+    "unassignedPeriods": "Unassigned periods today"
   },
   "timeline": {
     "periods": "{{count}} periods",
@@ -160,7 +161,9 @@
     "markedAsBreak": "{{start}}–{{end}} marked as a break",
     "delete": "Delete",
     "deleteAria": "Delete the period {{start}}–{{end}}",
-    "deleted": "Period {{start}}–{{end}} deleted"
+    "deleted": "Period {{start}}–{{end}} deleted",
+    "openAll": "Open all days",
+    "closeAll": "Close past days"
   },
   "picker": {
     "search": "Search projects",

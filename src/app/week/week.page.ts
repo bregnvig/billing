@@ -102,6 +102,11 @@ export class WeekPage {
   protected readonly isThisWeek = computed(() => this.weekStart() === startOfWeek(this.#today()));
 
   protected readonly editing = signal<Editing | null>(null);
+  /**
+   * Days you opened or closed yourself (by date). Kept while you move between weeks; days without
+   * a choice use their default (open when today or when they have unassigned time).
+   */
+  readonly #openChoices = signal(new Map<IsoDate, boolean>());
 
   constructor() {
     // Handle ?assign=<date> once the day's periods are loaded, then drop it from the URL so
@@ -113,6 +118,7 @@ export class WeekPage {
         const day = this.days().find(d => d.date === date);
         if (day?.unassignedRefs.length) {
           const single = day.unassignedRefs.length === 1;
+          this.#setOpen([day.date], true);
           this.openPicker(single ? day.unassignedRefs[0].periodId : `all-${date}`, day.unassignedRefs);
         }
         void this.#router.navigate([], { queryParams: { assign: null }, queryParamsHandling: 'merge', replaceUrl: true });
@@ -188,6 +194,14 @@ export class WeekPage {
             };
           });
           const items: (PeriodRow | GapRow)[] = [...rows, ...gaps].sort((a, b) => a.start.getTime() - b.start.getTime());
+          const byProject = new Map<string, { name: string; color: ProjectColor; work: number }>();
+          for (const row of rows) {
+            if (row.type !== 'work' || !row.projectId || !row.color) continue;
+            const name = projects.get(row.projectId)?.name ?? '';
+            const item = byProject.get(row.projectId) ?? { name, color: row.color, work: 0 };
+            item.work += row.durationMs;
+            byProject.set(row.projectId, item);
+          }
           const total = this.#totals().get(date);
           return {
             date,
@@ -199,8 +213,14 @@ export class WeekPage {
             unassigned: total?.unassigned ?? 0,
             rows,
             items,
+            breakdown: [...byProject.values()].sort((a, b) => b.work - a.work),
             unassignedRefs: rows.filter(r => r.projectId === null && r.type === 'work').map(r => r.ref),
           };
+        })
+        .map(day => {
+          const collapsible = day.rows.length > 0 && !day.isToday;
+          const byDefault = day.isToday || day.unassigned >= this.minute;
+          return { ...day, collapsible, open: !collapsible || (this.#openChoices().get(day.date) ?? byDefault) };
         })
         // Newest first, so today is at the top; days later in the week can't have time yet.
         .filter(day => day.rows.length > 0 || (day.date <= this.#today() && weekdayIndex(day.date) < 5))
@@ -222,9 +242,33 @@ export class WeekPage {
   };
 
   protected readonly openPicker = (key: string, refs: PeriodRef[]): void => {
+    // Acting on a collapsed day ("Add period", "Assign all", ?assign=…) opens it.
+    const date = /^(?:add|all)-(\d{4}-\d{2}-\d{2})$/.exec(key)?.[1] as IsoDate | undefined;
+    if (date) this.#setOpen([date], true);
     this.actionError.set(null);
     this.editing.set({ key, refs });
   };
+
+  readonly #setOpen = (dates: IsoDate[], open: boolean): void =>
+    this.#openChoices.update(choices => {
+      const next = new Map(choices);
+      for (const date of dates) next.set(date, open);
+      return next;
+    });
+
+  protected readonly toggleDay = (date: IsoDate, open: boolean): void => {
+    this.#setOpen([date], !open);
+    if (open && this.editing()?.key.includes(date)) this.editing.set(null);
+  };
+
+  readonly #collapsible = computed(() => this.days().filter(d => d.collapsible));
+  protected readonly hasCollapsible = computed(() => this.#collapsible().length > 0);
+  protected readonly allOpen = computed(() => this.#collapsible().every(d => d.open));
+  protected readonly toggleAll = (): void =>
+    this.#setOpen(
+      this.#collapsible().map(d => d.date),
+      !this.allOpen(),
+    );
 
   protected readonly closePicker = (returnFocusTo?: string): void => {
     this.editing.set(null);
