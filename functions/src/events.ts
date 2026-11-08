@@ -3,17 +3,7 @@
  * Pure logic: no Firebase here, so it can be unit-tested. `report-event.ts` loads the
  * entries, calls `applyEvent` inside a transaction and writes the result.
  */
-import {
-  addDays,
-  HookEvent,
-  HookEventResult,
-  IsoDate,
-  isoDateIn,
-  Period,
-  startOfDayIn,
-  TimeEntry,
-  timeEntryId,
-} from '@loopme/model';
+import { addDays, HookEvent, HookEventResult, IsoDate, isoDateIn, Period, startOfDayIn, TimeEntry, timeEntryId } from '@loopme/model';
 
 export interface Outcome {
   result: Exclude<HookEventResult, 'duplicate'>;
@@ -40,7 +30,7 @@ const byStart = (a: Period, b: Period) => a.start.getTime() - b.start.getTime();
 export const applyEvent = (entries: TimeEntry[], event: HookEvent, now: Date): Outcome => {
   const today = isoDateIn(event.at, event.tz);
   const changed = new Map<string, TimeEntry>();
-  const all = new Map(entries.map((e) => [e.id, structuredClone(e)]));
+  const all = new Map(entries.map(e => [e.id, structuredClone(e)]));
 
   const touch = (entry: TimeEntry) => {
     entry.periods.sort(byStart);
@@ -68,9 +58,7 @@ export const applyEvent = (entries: TimeEntry[], event: HookEvent, now: Date): O
   };
 
   const running = [...all.values()]
-    .flatMap((entry) =>
-      entry.periods.filter((p) => p.end === null).map((period) => ({ entry, period })),
-    )
+    .flatMap(entry => entry.periods.filter(p => p.end === null).map(period => ({ entry, period })))
     .sort((a, b) => byStart(b.period, a.period))[0];
 
   /** Ends `period` at `end`, splitting it at local midnights into following days' entries. */

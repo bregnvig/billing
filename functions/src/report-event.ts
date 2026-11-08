@@ -23,9 +23,7 @@ export const reportEvent = onRequest({ ...functionOptions, cors: false }, async 
 
   const token = bearerToken(req.get('authorization'));
   const db = getFirestore();
-  const tokenDoc = token
-    ? await db.collection(COLLECTIONS.deviceTokens).doc(hashToken(token)).get()
-    : null;
+  const tokenDoc = token ? await db.collection(COLLECTIONS.deviceTokens).doc(hashToken(token)).get() : null;
   const deviceId: string | undefined = tokenDoc?.get('deviceId');
   const deviceRef = deviceId ? db.collection(COLLECTIONS.devices).doc(deviceId) : null;
   const device = deviceRef ? await deviceRef.get() : null;
@@ -58,16 +56,12 @@ export const reportEvent = onRequest({ ...functionOptions, cors: false }, async 
     if (previous.exists) return 'duplicate';
 
     const snapshot = await tx.get(
-      db
-        .collection(COLLECTIONS.timeEntries)
-        .where('date', '>=', addDays(today, -LOOKBACK_DAYS))
-        .where('date', '<=', today),
+      db.collection(COLLECTIONS.timeEntries).where('date', '>=', addDays(today, -LOOKBACK_DAYS)).where('date', '<=', today),
     );
-    const entries = snapshot.docs.map((d) => entryFromDoc(d.id, d.data()));
+    const entries = snapshot.docs.map(d => entryFromDoc(d.id, d.data()));
     const outcome = applyEvent(entries, event, now);
 
-    for (const entry of outcome.writes)
-      tx.set(db.collection(COLLECTIONS.timeEntries).doc(entry.id), entryToDoc(entry));
+    for (const entry of outcome.writes) tx.set(db.collection(COLLECTIONS.timeEntries).doc(entry.id), entryToDoc(entry));
     tx.set(eventRef, {
       deviceId,
       type: event.type,

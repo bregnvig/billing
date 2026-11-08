@@ -10,17 +10,10 @@ export interface DayTotal {
 }
 
 const workPeriods = (entries: readonly TimeEntry[]) =>
-  entries.flatMap((entry) =>
-    entry.periods.filter((p) => p.type === 'work').map((period) => ({ entry, period })),
-  );
+  entries.flatMap(entry => entry.periods.filter(p => p.type === 'work').map(period => ({ entry, period })));
 
 /** Worked milliseconds inside the window [from, to), clipping periods that cross its edges. */
-export const workMsBetween = (
-  entries: readonly TimeEntry[],
-  from: Date,
-  to: Date,
-  now: Date,
-): number =>
+export const workMsBetween = (entries: readonly TimeEntry[], from: Date, to: Date, now: Date): number =>
   workPeriods(entries).reduce((sum, { period }) => {
     const start = Math.max(period.start.getTime(), from.getTime());
     const end = Math.min((period.end ?? now).getTime(), to.getTime(), now.getTime());

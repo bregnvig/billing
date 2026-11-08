@@ -25,8 +25,7 @@ const partsIn = (at: Date, tz: string) => {
     minute: '2-digit',
     second: '2-digit',
   }).formatToParts(at);
-  const get = (type: Intl.DateTimeFormatPartTypes) =>
-    Number(parts.find((p) => p.type === type)?.value);
+  const get = (type: Intl.DateTimeFormatPartTypes) => Number(parts.find(p => p.type === type)?.value);
   return {
     year: get('year'),
     month: get('month'),

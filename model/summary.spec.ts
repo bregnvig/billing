@@ -40,12 +40,8 @@ describe('summary', () => {
   });
 
   it('clips work to a window and measures running periods up to now', () => {
-    expect(workMsBetween(entries, at('2026-11-05', '10:00'), at('2026-11-05', '13:00'), now)).toBe(
-      2.5 * H,
-    );
-    expect(workMsBetween(entries, at('2026-11-06', '00:00'), at('2026-11-07', '00:00'), now)).toBe(
-      2 * H,
-    );
+    expect(workMsBetween(entries, at('2026-11-05', '10:00'), at('2026-11-05', '13:00'), now)).toBe(2.5 * H);
+    expect(workMsBetween(entries, at('2026-11-06', '00:00'), at('2026-11-07', '00:00'), now)).toBe(2 * H);
   });
 
   it('finds the running period', () => {

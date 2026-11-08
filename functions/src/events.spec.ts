@@ -15,11 +15,7 @@ const event = (type: 'start' | 'stop', at: Date, eventId = `e-${at.getTime()}`):
   reason: type === 'start' ? 'unlock' : 'lock',
 });
 
-const entry = (
-  date: string,
-  periods: TimeEntry['periods'],
-  projectId: string | null = null,
-): TimeEntry => ({
+const entry = (date: string, periods: TimeEntry['periods'], projectId: string | null = null): TimeEntry => ({
   id: timeEntryId(date as TimeEntry['date'], projectId, null),
   date: date as TimeEntry['date'],
   projectId,
@@ -30,8 +26,7 @@ const entry = (
   updatedAt: now,
 });
 
-const running = (id: string, start: Date) =>
-  ({ id, start, end: null, type: 'work', source: 'hook' }) as const;
+const running = (id: string, start: Date) => ({ id, start, end: null, type: 'work', source: 'hook' }) as const;
 
 describe('applyEvent: start', () => {
   it("opens a running period in the day's unassigned entry", () => {
@@ -53,12 +48,8 @@ describe('applyEvent: start', () => {
         source: 'hook',
       },
     ]);
-    const { writes } = applyEvent(
-      [existing],
-      event('start', cph('2026-11-05', '12:15'), 'ev2'),
-      now,
-    );
-    expect(writes[0].periods.map((p) => p.id)).toEqual(['p1', 'ev2']);
+    const { writes } = applyEvent([existing], event('start', cph('2026-11-05', '12:15'), 'ev2'), now);
+    expect(writes[0].periods.map(p => p.id)).toEqual(['p1', 'ev2']);
   });
 
   it('does nothing when a period is already running today, even if moved to a project', () => {
@@ -69,15 +60,11 @@ describe('applyEvent: start', () => {
 
   it('closes a stale running period from an earlier day at the end of that day', () => {
     const stale = entry('2026-11-03', [running('old', cph('2026-11-03', '15:00'))]);
-    const { result, writes } = applyEvent(
-      [stale],
-      event('start', cph('2026-11-05', '08:00'), 'ev3'),
-      now,
-    );
+    const { result, writes } = applyEvent([stale], event('start', cph('2026-11-05', '08:00'), 'ev3'), now);
     expect(result).toBe('started');
-    const closed = writes.find((w) => w.date === '2026-11-03')!;
+    const closed = writes.find(w => w.date === '2026-11-03')!;
     expect(closed.periods[0].end).toEqual(startOfDayIn('2026-11-04', TZ));
-    expect(writes.find((w) => w.date === '2026-11-05')!.periods[0].id).toBe('ev3');
+    expect(writes.find(w => w.date === '2026-11-05')!.periods[0].id).toBe('ev3');
   });
 
   it('does not change the input entries', () => {
@@ -115,9 +102,7 @@ describe('applyEvent: stop', () => {
 
   it('ignores a stop before the running period started', () => {
     const e = entry('2026-11-05', [running('p1', cph('2026-11-05', '08:00'))]);
-    expect(applyEvent([e], event('stop', cph('2026-11-05', '07:00')), now).result).toBe(
-      'stop-before-start',
-    );
+    expect(applyEvent([e], event('stop', cph('2026-11-05', '07:00')), now).result).toBe('stop-before-start');
   });
 
   it('splits work past midnight into both days, keeping project and task', () => {
@@ -125,8 +110,8 @@ describe('applyEvent: stop', () => {
     const stopAt = cph('2026-11-06', '01:30');
     const { writes } = applyEvent([late], event('stop', stopAt), now);
     const midnight = startOfDayIn('2026-11-06', TZ);
-    const day1 = writes.find((w) => w.date === '2026-11-05')!;
-    const day2 = writes.find((w) => w.date === '2026-11-06')!;
+    const day1 = writes.find(w => w.date === '2026-11-05')!;
+    const day2 = writes.find(w => w.date === '2026-11-06')!;
     expect(day1.periods[0]).toMatchObject({ id: 'p1', end: midnight });
     expect(day2.id).toBe('2026-11-06_acme_');
     expect(day2.periods[0]).toMatchObject({

@@ -21,18 +21,16 @@ export const parseReportBody = (body: unknown, now: Date): Parsed<ReportBody> =>
     return { ok: false, error: 'Body must be a JSON object.' };
   }
   const b = body as Record<string, unknown>;
-  if (b['type'] === 'ping' && Object.keys(b).length === 1)
-    return { ok: true, value: { type: 'ping' } };
+  if (b['type'] === 'ping' && Object.keys(b).length === 1) return { ok: true, value: { type: 'ping' } };
 
-  const unknownKeys = Object.keys(b).filter((k) => !ALLOWED_KEYS.has(k));
+  const unknownKeys = Object.keys(b).filter(k => !ALLOWED_KEYS.has(k));
   if (unknownKeys.length) return { ok: false, error: `Unknown fields: ${unknownKeys.join(', ')}.` };
 
   const { eventId, type, at, tz, reason } = b;
   if (typeof eventId !== 'string' || !EVENT_ID.test(eventId)) {
     return { ok: false, error: 'eventId must be 8-64 letters, digits or dashes.' };
   }
-  if (type !== 'start' && type !== 'stop')
-    return { ok: false, error: "type must be 'start' or 'stop'." };
+  if (type !== 'start' && type !== 'stop') return { ok: false, error: "type must be 'start' or 'stop'." };
   if (typeof at !== 'string' || !ISO_INSTANT.test(at) || Number.isNaN(Date.parse(at))) {
     return { ok: false, error: 'at must be a UTC ISO timestamp like 2026-11-05T08:02:00.000Z.' };
   }
@@ -61,8 +59,7 @@ export const bearerToken = (header: string | undefined): string | null => {
 };
 
 /** Device tokens are only ever stored as this hash. */
-export const hashToken = (token: string): string =>
-  createHash('sha256').update(token).digest('hex');
+export const hashToken = (token: string): string => createHash('sha256').update(token).digest('hex');
 
 /** A new device token, prefixed so it's recognisable if it leaks (e.g. in a paste). */
 export const newDeviceToken = (): string => `lpm_${randomBytes(32).toString('base64url')}`;

@@ -11,8 +11,7 @@
  * Palette key for a project's color. The actual light/dark values and the marker shape
  * live in the UI (see the `ui-design` skill and src/tailwind.css), so stored data doesn't depend on the theme.
  */
-export type ProjectColor =
-  'blue' | 'orange' | 'pink' | 'brown' | 'green' | 'purple' | 'yellow' | 'red';
+export type ProjectColor = 'blue' | 'orange' | 'pink' | 'brown' | 'green' | 'purple' | 'yellow' | 'red';
 
 /** Something hours can be booked against. */
 export interface Project {
@@ -83,11 +82,8 @@ export type NewProject = Pick<Project, 'name'> & Partial<Pick<Project, 'color'>>
 export type NewTask = Pick<Task, 'projectId' | 'name'>;
 
 /** Document id for the entry of a given day/project/task, e.g. `2026-11-05_acme_api` or `2026-11-05__`. */
-export const timeEntryId = (
-  date: IsoDate,
-  projectId: string | null,
-  taskId: string | null,
-): string => `${date}_${projectId ?? ''}_${taskId ?? ''}`;
+export const timeEntryId = (date: IsoDate, projectId: string | null, taskId: string | null): string =>
+  `${date}_${projectId ?? ''}_${taskId ?? ''}`;
 
 /** Local `YYYY-MM-DD` for a Date (not UTC, so late-evening work stays on the right day). */
 export const toIsoDate = (d: Date): IsoDate => {
@@ -100,11 +96,5 @@ export const periodDurationMs = (period: Pick<Period, 'start' | 'end'>, now = ne
   Math.max(0, (period.end ?? now).getTime() - period.start.getTime());
 
 /** Total duration of an entry's periods of the given type, in milliseconds. */
-export const entryDurationMs = (
-  entry: Pick<TimeEntry, 'periods'>,
-  type: PeriodType = 'work',
-  now = new Date(),
-): number =>
-  entry.periods
-    .filter((p) => p.type === type)
-    .reduce((sum, p) => sum + periodDurationMs(p, now), 0);
+export const entryDurationMs = (entry: Pick<TimeEntry, 'periods'>, type: PeriodType = 'work', now = new Date()): number =>
+  entry.periods.filter(p => p.type === type).reduce((sum, p) => sum + periodDurationMs(p, now), 0);

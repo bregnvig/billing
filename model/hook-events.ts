@@ -17,13 +17,7 @@ export interface HookEvent {
 
 /** What `reportEvent` did with an event (stored on `hookEvents/{eventId}`). */
 export type HookEventResult =
-  | 'started'
-  | 'already-running'
-  | 'stopped'
-  | 'closed-stale'
-  | 'no-running-period'
-  | 'stop-before-start'
-  | 'duplicate';
+  'started' | 'already-running' | 'stopped' | 'closed-stale' | 'no-running-period' | 'stop-before-start' | 'duplicate';
 
 /** `hookEvents/{eventId}`: audit log of received events, readable by the owner. */
 export interface HookEventRecord extends HookEvent {

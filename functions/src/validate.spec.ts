@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  bearerToken,
-  hashToken,
-  newDeviceToken,
-  parseDeviceName,
-  parseReportBody,
-} from './validate';
+import { bearerToken, hashToken, newDeviceToken, parseDeviceName, parseReportBody } from './validate';
 
 const now = new Date('2026-11-05T12:00:00.000Z');
 const valid = {

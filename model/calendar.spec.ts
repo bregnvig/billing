@@ -1,13 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  datesBetween,
-  daysInMonth,
-  isoWeek,
-  startOfMonth,
-  startOfPreviousMonth,
-  startOfWeek,
-  weekdayIndex,
-} from './calendar';
+import { datesBetween, daysInMonth, isoWeek, startOfMonth, startOfPreviousMonth, startOfWeek, weekdayIndex } from './calendar';
 
 describe('calendar', () => {
   it('starts weeks on Monday', () => {
@@ -33,11 +25,6 @@ describe('calendar', () => {
   });
 
   it('lists days inclusively', () => {
-    expect(datesBetween('2026-10-30', '2026-11-02')).toEqual([
-      '2026-10-30',
-      '2026-10-31',
-      '2026-11-01',
-      '2026-11-02',
-    ]);
+    expect(datesBetween('2026-10-30', '2026-11-02')).toEqual(['2026-10-30', '2026-10-31', '2026-11-01', '2026-11-02']);
   });
 });

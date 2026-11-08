@@ -28,8 +28,7 @@ export const daysInMonth = (date: IsoDate): number => {
 };
 
 /** First day of the month before `date`'s month. */
-export const startOfPreviousMonth = (date: IsoDate): IsoDate =>
-  startOfMonth(addDays(startOfMonth(date), -1));
+export const startOfPreviousMonth = (date: IsoDate): IsoDate => startOfMonth(addDays(startOfMonth(date), -1));
 
 /** ISO 8601 week number (1-53). */
 export const isoWeek = (date: IsoDate): number => {

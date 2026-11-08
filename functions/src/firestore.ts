@@ -24,7 +24,7 @@ export const entryFromDoc = (id: string, data: DocumentData): TimeEntry => ({
 
 export const entryToDoc = ({ id: _id, ...e }: TimeEntry): DocumentData => ({
   ...e,
-  periods: e.periods.map((p) => ({ ...p, start: Timestamp.fromDate(p.start), end: toTs(p.end) })),
+  periods: e.periods.map(p => ({ ...p, start: Timestamp.fromDate(p.start), end: toTs(p.end) })),
   createdAt: Timestamp.fromDate(e.createdAt),
   updatedAt: Timestamp.fromDate(e.updatedAt),
 });
