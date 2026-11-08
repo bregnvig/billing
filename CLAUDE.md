@@ -76,6 +76,7 @@ Collections: `projects`, `tasks`, `timeEntries` (owner read/write), `devices`, `
   - Exception: Angular **lifecycle hooks** (`ngOnInit`, `ngOnChanges`, `ngOnDestroy`, `ngAfterViewInit`, …) must be real methods. Angular finds them on the prototype, so an arrow property would silently never run.
 - **True privates.** Use `#field` / `#method = () => …` for anything private, never the `private` keyword.
   - Exception: members used in a **template** can't be `#private` (templates can't see them). Make those `protected`.
+  - Exception: Angular's signal queries and inputs/outputs (`viewChild()`, `contentChild()`, `input()`, `output()`, `model()`) can't be `#private` either (NG1053). Make queries `protected`; inputs/outputs are public.
 - Prefer `inject()` over constructor parameters, so services end up as `readonly #db = inject(FIRESTORE)`.
 
 ## Commands

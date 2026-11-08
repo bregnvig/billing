@@ -70,10 +70,6 @@
     "thisWeek": "This week",
     "lastWeek": "Last week"
   },
-  "week": {
-    "title": "Week",
-    "placeholder": "Weekday overview comes here."
-  },
   "settings": {
     "title": "Settings",
     "appearance": {
@@ -125,6 +121,62 @@
         "copy": "Couldn't copy. Select the text and copy it manually.",
         "revoke": "Couldn't revoke the device. Try again."
       }
+    }
+  },
+  "weekView": {
+    "title": "Week {{week}}",
+    "previous": "Previous week",
+    "next": "Next week",
+    "today": "Today",
+    "worked": "{{duration}} worked",
+    "shortcuts": "Keys: ← → change week · T today · Enter or A on a period to assign it",
+    "assignAll": "Assign all unassigned ({{count}})",
+    "noTime": "No time recorded.",
+    "now": "now",
+    "running": "Running",
+    "periodAria": "{{label}}, {{start}} to {{end}}, {{duration}}. Press Enter to assign.",
+    "assignedTo": "{{count}} period(s) assigned to {{name}}",
+    "unassignedDone": "{{count}} period(s) unassigned",
+    "undo": "Undo",
+    "errors": {
+      "assign": "Couldn't assign. Check your connection and try again.",
+      "undo": "Couldn't undo. Assign the period again by hand.",
+      "add": "Couldn't add the period. Check your connection and try again."
+    },
+    "addPeriod": "Add period",
+    "added": "Period {{start}}–{{end}} added"
+  },
+  "picker": {
+    "search": "Search projects",
+    "placeholder": "Type to find or create a project",
+    "options": "Projects",
+    "unassigned": "Unassigned",
+    "create": "Create project “{{name}}”",
+    "noMatches": "No matches"
+  },
+  "toast": {
+    "dismiss": "Dismiss"
+  },
+  "addPeriod": {
+    "title": "Add period",
+    "start": "Start",
+    "end": "End",
+    "type": "Type",
+    "types": {
+      "work": "Work",
+      "break": "Break"
+    },
+    "noProject": "No project",
+    "overlap": "Overlaps {{periods}}. You can still add it.",
+    "cancel": "Cancel",
+    "save": "Add period",
+    "saving": "Adding…",
+    "errors": {
+      "startRequired": "Enter a start time.",
+      "endRequired": "Enter an end time.",
+      "format": "Use a time like 08:30 or 830.",
+      "endBeforeStart": "End must be after start.",
+      "future": "Can't be in the future."
     }
   }
 }

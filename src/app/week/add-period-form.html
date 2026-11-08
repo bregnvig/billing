@@ -1,0 +1,107 @@
+<form (submit)="submit($event)" (keydown)="onKeydown($event)" [attr.aria-label]="'addPeriod.title' | translate">
+  <!-- One row aligned to the bottom, so the pills line up with the inputs whatever the label
+       height; errors get their own line below so they never push the row out of line. -->
+  <div class="flex flex-wrap items-end gap-3">
+    <div class="w-28">
+      <label for="add-start" class="block text-xs font-medium text-muted">{{ 'addPeriod.start' | translate }}</label>
+      <input
+        #startInput
+        id="add-start"
+        class="mt-1 h-10 w-full rounded-md border border-line bg-surface px-3 tabular-nums outline-none focus:border-2 focus:border-accent"
+        placeholder="08:30"
+        inputmode="numeric"
+        autocomplete="off"
+        [formField]="times.start"
+        [attr.aria-invalid]="times.start().touched() && times.start().invalid()"
+        aria-describedby="add-start-error"
+        (blur)="normalize('start')" />
+    </div>
+    <div class="w-28">
+      <label for="add-end" class="block text-xs font-medium text-muted">{{ 'addPeriod.end' | translate }}</label>
+      <input
+        id="add-end"
+        class="mt-1 h-10 w-full rounded-md border border-line bg-surface px-3 tabular-nums outline-none focus:border-2 focus:border-accent"
+        placeholder="12:00"
+        inputmode="numeric"
+        autocomplete="off"
+        [formField]="times.end"
+        [attr.aria-invalid]="times.end().touched() && times.end().invalid()"
+        aria-describedby="add-end-error"
+        (blur)="normalize('end')" />
+    </div>
+
+    <fieldset class="flex gap-2">
+      <legend class="sr-only">{{ 'addPeriod.type' | translate }}</legend>
+      @for (option of ['work', 'break']; track option) {
+      <label
+        class="flex h-10 cursor-pointer items-center gap-2 rounded-full border px-4 transition-colors duration-150 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent"
+        [class.border-accent]="type() === option"
+        [class.bg-accent-soft]="type() === option"
+        [class.text-accent]="type() === option"
+        [class.border-line]="type() !== option">
+        <input
+          type="radio"
+          name="period-type"
+          class="sr-only"
+          [value]="option"
+          [checked]="type() === option"
+          (change)="type.set($any(option))" />
+        <span class="material-symbols-outlined" aria-hidden="true">{{ option === 'work' ? 'work' : 'coffee' }}</span>
+        {{ 'addPeriod.types.' + option | translate }}
+      </label>
+      }
+    </fieldset>
+  </div>
+
+  <div class="mt-1 flex min-h-4 flex-wrap gap-x-3 text-xs text-danger">
+    <p id="add-start-error" class="w-28">
+      @if (times.start().touched() && times.start().errors()[0]?.message; as key) { {{ key | translate }} }
+    </p>
+    <p id="add-end-error" class="w-28 grow">
+      @if (times.end().touched() && times.end().errors()[0]?.message; as key) { {{ key | translate }} }
+    </p>
+  </div>
+
+  @if (type() === 'work') {
+  <div class="mt-2">
+    <button
+      type="button"
+      class="flex h-10 items-center gap-2 rounded-full border border-line px-4 transition-colors duration-150 hover:bg-raised"
+      [attr.aria-expanded]="pickingProject()"
+      (click)="pickingProject.set(!pickingProject())">
+      @if (projectLabel(); as chosen) {
+      <app-marker [color]="chosen.color" />
+      {{ chosen.name }} } @else {
+      <span class="size-3 rounded-full border-2 border-unassigned" aria-hidden="true"></span>
+      {{ 'addPeriod.noProject' | translate }} }
+      <span class="material-symbols-outlined text-muted" aria-hidden="true">arrow_drop_down</span>
+    </button>
+  </div>
+  } @if (pickingProject()) {
+  <app-project-picker
+    class="mt-3"
+    [projects]="projects()"
+    [tasks]="tasks()"
+    [allowUnassign]="true"
+    (picked)="pickProject($event)"
+    (cancelled)="pickingProject.set(false)" />
+  } @if (overlaps().length) {
+  <p class="mt-3 flex items-center gap-2 text-xs" role="status">
+    <span class="material-symbols-outlined text-unassigned" aria-hidden="true">warning</span>
+    {{ 'addPeriod.overlap' | translate: { periods: overlaps().join(', ') } }}
+  </p>
+  }
+
+  <div class="mt-4 flex justify-end gap-2">
+    <button type="button" class="h-10 rounded-full px-4 transition-colors duration-150 hover:bg-raised" (click)="cancelled.emit()">
+      {{ 'addPeriod.cancel' | translate }}
+    </button>
+    <button
+      type="submit"
+      class="flex h-10 items-center gap-2 rounded-full bg-accent px-5 font-medium text-on-accent transition-opacity duration-150 hover:opacity-90 disabled:opacity-60"
+      [disabled]="busy()">
+      <span class="material-symbols-outlined" aria-hidden="true">add</span>
+      {{ (busy() ? 'addPeriod.saving' : 'addPeriod.save') | translate }}
+    </button>
+  </div>
+</form>

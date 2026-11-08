@@ -164,16 +164,13 @@ Both themes are first-class. The Firebase screenshots are dark, and light follow
   - **Left icon rail** (`bg-rail`, 64px wide): app icon at the top, then `Week`, `Projects`, `Settings`. The active item gets an `accent-soft` rounded highlight. Every icon has a tooltip and an `aria-label`.
   - **Top-left context**: the week picker as a pill dropdown (`Week 45 ▾`), with `‹ ›` arrows and a `Today` pill next to it.
   - Content is centered with a max width of ~1200px and generous top padding.
-- **Week page**:
-  1. **Greeting** (only on the week page): `Good morning` in `text-5xl` with the warm gradient, then a muted subline: `Week 45 · 3–7 Nov`.
-  2. **Page header**: title `Week 45` (`text-3xl`, regular), then pill badges: `32:15 worked`, and `1:20 unassigned` (amber outline) if any.
-  3. **Section `Days`** (muted heading) with a grid of **day metric cards**, five across on desktop:
-     - Card title: icon + `Thu 5 Nov`. Today's card gets an `accent` border.
-     - Label `Worked`, muted qualifier `(today)` / `(so far)`.
-     - Big number `7:30` + muted delta vs the same weekday last week (`+0:45`).
-     - A thin **day timeline** (default 07:00-19:00, extending if needed). Work periods are bars in the project color, breaks are hatched, unassigned periods are amber-outlined, and a running period has a pulsing end.
-  4. **Section `This week`**: one wide card with a line chart of cumulative hours, **solid = this week, dashed = last week**, plus the legend.
-  5. **Section `Projects`**: a table card. Columns: marker + project / task, Mon … Fri, Total. Right-aligned `tabular-nums`, and a footer row with totals.
+- **Overview page** (landing, `/overview`): warm greeting + date/week subline, then metric cards: **Today** (full width, day timeline, running/unassigned badges), **This week** (bars per day, last week dashed) and **This month** (cumulative line, last month dashed). Changes compare against the same point in time.
+- **Week page** (`/week?w=<Monday>`), for checking and assigning time:
+  1. Week navigation: `‹ ›` pills, a `Today` pill when not on the current week, and the date range. Keys: `←/→` week, `T` today.
+  2. Title `Week 45` (`text-3xl`, regular) with pill badges: `32:15 worked`, `1:20 unassigned` (amber, only from 1 minute up).
+  3. **One card per day, newest first** (today at the top, accent border). Days later in the week are hidden; Sat/Sun only when they have time. Empty days are compact one-line cards.
+  4. Day card: title, total, unassigned badge, `Assign all unassigned (n)` when there are several; then the day timeline and one row per period (marker + project / task, or amber ring + Unassigned; times; duration; Running badge).
+  5. Clicking a row (or Enter / `A`) opens the **project picker inline** under it: type to filter or create a project, ↑/↓, Enter, Esc. Assigning shows a toast with Undo.
 - **Responsive**:
   - Below 1024px the day cards wrap to 2-3 columns.
   - Below 768px the rail becomes a bottom navigation bar, the cards stack, and the day timeline gets a full-width row.

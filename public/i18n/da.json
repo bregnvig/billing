@@ -70,10 +70,6 @@
     "thisWeek": "Denne uge",
     "lastWeek": "Sidste uge"
   },
-  "week": {
-    "title": "Uge",
-    "placeholder": "Ugeoversigten kommer her."
-  },
   "settings": {
     "title": "Indstillinger",
     "appearance": {
@@ -125,6 +121,62 @@
         "copy": "Kunne ikke kopiere. Markér teksten, og kopiér den manuelt.",
         "revoke": "Kunne ikke tilbagekalde enheden. Prøv igen."
       }
+    }
+  },
+  "weekView": {
+    "title": "Uge {{week}}",
+    "previous": "Forrige uge",
+    "next": "Næste uge",
+    "today": "I dag",
+    "worked": "{{duration}} arbejdet",
+    "shortcuts": "Taster: ← → skift uge · T i dag · Enter eller A på en periode for at tildele den",
+    "assignAll": "Tildel alle ikke tildelte ({{count}})",
+    "noTime": "Ingen tid registreret.",
+    "now": "nu",
+    "running": "Kører",
+    "periodAria": "{{label}}, {{start}} til {{end}}, {{duration}}. Tryk Enter for at tildele.",
+    "assignedTo": "{{count}} periode(r) tildelt {{name}}",
+    "unassignedDone": "{{count}} periode(r) gjort ikke tildelt",
+    "undo": "Fortryd",
+    "errors": {
+      "assign": "Kunne ikke tildele. Tjek forbindelsen, og prøv igen.",
+      "undo": "Kunne ikke fortryde. Tildel perioden igen manuelt.",
+      "add": "Kunne ikke tilføje perioden. Tjek forbindelsen, og prøv igen."
+    },
+    "addPeriod": "Tilføj periode",
+    "added": "Periode {{start}}–{{end}} tilføjet"
+  },
+  "picker": {
+    "search": "Søg i projekter",
+    "placeholder": "Skriv for at finde eller oprette et projekt",
+    "options": "Projekter",
+    "unassigned": "Ikke tildelt",
+    "create": "Opret projektet “{{name}}”",
+    "noMatches": "Ingen resultater"
+  },
+  "toast": {
+    "dismiss": "Luk"
+  },
+  "addPeriod": {
+    "title": "Tilføj periode",
+    "start": "Start",
+    "end": "Slut",
+    "type": "Type",
+    "types": {
+      "work": "Arbejde",
+      "break": "Pause"
+    },
+    "noProject": "Intet projekt",
+    "overlap": "Overlapper {{periods}}. Du kan stadig tilføje den.",
+    "cancel": "Annuller",
+    "save": "Tilføj periode",
+    "saving": "Tilføjer…",
+    "errors": {
+      "startRequired": "Angiv et starttidspunkt.",
+      "endRequired": "Angiv et sluttidspunkt.",
+      "format": "Brug et tidspunkt som 08:30 eller 830.",
+      "endBeforeStart": "Slut skal være efter start.",
+      "future": "Kan ikke ligge i fremtiden."
     }
   }
 }

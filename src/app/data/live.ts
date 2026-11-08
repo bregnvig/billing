@@ -1,8 +1,8 @@
 import { DestroyRef, effect, inject, signal, Signal } from '@angular/core';
-import { IsoDate, Project, TimeEntry } from '@loopme/model';
+import { IsoDate, Project, Task, TimeEntry } from '@loopme/model';
 import { onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { FIRESTORE } from '../firebase/firebase.providers';
-import { projectsCollection, timeEntriesCollection } from './collections';
+import { projectsCollection, tasksCollection, timeEntriesCollection } from './collections';
 
 export interface Live<T> {
   /** `null` while loading. */
@@ -42,6 +42,22 @@ export const liveProjects = (): Live<Project[]> => {
   const error = signal<string | null>(null);
   const unsubscribe = onSnapshot(
     query(projectsCollection(inject(FIRESTORE)), orderBy('name')),
+    snapshot => {
+      value.set(snapshot.docs.map(d => d.data()));
+      error.set(null);
+    },
+    () => error.set(OFFLINE),
+  );
+  inject(DestroyRef).onDestroy(unsubscribe);
+  return { value: value.asReadonly(), error: error.asReadonly() };
+};
+
+/** All tasks, kept live. Call in an injection context. */
+export const liveTasks = (): Live<Task[]> => {
+  const value = signal<Task[] | null>(null);
+  const error = signal<string | null>(null);
+  const unsubscribe = onSnapshot(
+    query(tasksCollection(inject(FIRESTORE)), orderBy('name')),
     snapshot => {
       value.set(snapshot.docs.map(d => d.data()));
       error.set(null);

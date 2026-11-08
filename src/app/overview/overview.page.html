@@ -23,14 +23,14 @@
       [muted]="todayWork() === 0"
       [delta]="todayWork() || todayLastWeek() ? change(todayWork(), todayLastWeek()) : undefined"
       [deltaLabel]="'overview.today.vsLastWeekday' | translate: { weekday: weekday() }">
-      @if (running() || todayUnassigned()) {
+      @if (running() || todayUnassigned() >= 60000) {
       <div class="mt-3 flex flex-wrap gap-2">
         @if (running(); as r) {
         <span class="flex items-center gap-1.5 rounded-full border border-running px-2 py-0.5 text-xs">
           <span class="size-1.5 rounded-full bg-running" aria-hidden="true"></span>
           {{ 'overview.runningSince' | translate: { time: r.since } }}
         </span>
-        } @if (todayUnassigned()) {
+        } @if (todayUnassigned() >= 60000) {
         <span class="rounded-full border border-unassigned px-2 py-0.5 text-xs tabular-nums">
           {{ 'overview.unassigned' | translate: { duration: duration(todayUnassigned()) } }}
         </span>
