@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { addPeriod, entryIdsForMove, gapsBetween, movePeriods, overlapping, removePeriod, setPeriodType } from './edit';
+import {
+  addPeriod,
+  continuingAssignment,
+  entryIdsForMove,
+  gapsBetween,
+  movePeriods,
+  overlapping,
+  removePeriod,
+  setPeriodEnd,
+  setPeriodType,
+} from './edit';
 import type { Period, TimeEntry } from './entities';
 
 const now = new Date('2026-11-08T12:00:00Z');
@@ -102,6 +112,38 @@ describe('addPeriod / removePeriod / overlapping', () => {
     const running = [p('r', 10, null)]; // running since 10:00; now is 12:00
     expect(overlapping(running, at(11), at(12), now).map(x => x.id)).toEqual(['r']);
     expect(overlapping(running, at(13), at(14), now).map(x => x.id)).toEqual([]);
+  });
+});
+
+describe('continuingAssignment', () => {
+  it('continues the most recent work period up to the given time, skipping breaks', () => {
+    const acme = entry('acme', 'api', [p('x', 8)]);
+    const beta = entry('beta', null, [p('y', 10)]);
+    const pause = entry('pause', null, [{ ...p('z', 11), type: 'break' }]);
+    expect(continuingAssignment([acme, beta, pause], new Date('2026-11-08T12:00:00Z'))).toEqual({ projectId: 'beta', taskId: null });
+    expect(continuingAssignment([acme, beta], new Date('2026-11-08T09:00:00Z'))).toEqual({ projectId: 'acme', taskId: 'api' });
+  });
+
+  it('is unassigned with no previous work period, or an unassigned one', () => {
+    expect(continuingAssignment([], now)).toEqual({ projectId: null, taskId: null });
+    expect(continuingAssignment([unassigned], now)).toEqual({ projectId: null, taskId: null });
+  });
+});
+
+describe('setPeriodEnd', () => {
+  it('stops a running period and can make it running again', () => {
+    const end = new Date('2026-11-08T15:30:00Z');
+    const stopped = setPeriodEnd(unassigned, 'c', end, now)!;
+    expect(stopped.periods.find(x => x.id === 'c')?.end).toEqual(end);
+    expect(stopped.updatedAt).toBe(now);
+    expect(unassigned.periods.find(x => x.id === 'c')?.end).toBeNull();
+    expect(setPeriodEnd(stopped, 'c', null, now)!.periods.find(x => x.id === 'c')?.end).toBeNull();
+  });
+
+  it('never ends a period before its start, and ignores unknown periods', () => {
+    const early = new Date('2026-11-08T12:00:00Z');
+    expect(setPeriodEnd(unassigned, 'c', early, now)!.periods.find(x => x.id === 'c')?.end).toEqual(new Date('2026-11-08T13:00:00Z'));
+    expect(setPeriodEnd(unassigned, 'nope', early, now)).toBeNull();
   });
 });
 

@@ -35,6 +35,13 @@
     "worked": "Worked",
     "soFar": "so far",
     "runningSince": "Running since {{time}}",
+    "stop": "Stop",
+    "stopAria": "Stop the period running since {{time}}",
+    "stopped": "Stopped at {{time}}",
+    "start": "Start",
+    "startAria": "Start a work period now",
+    "startedOn": "Started at {{time}} on {{name}}",
+    "startedUnassigned": "Started at {{time}}, unassigned",
     "unassigned": "{{duration}} unassigned",
     "today": {
       "title": "Today",

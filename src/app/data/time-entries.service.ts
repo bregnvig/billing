@@ -8,6 +8,7 @@ import {
   PeriodRef,
   PeriodType,
   removePeriod,
+  setPeriodEnd,
   setPeriodType,
   TimeEntry,
   timeEntryId,
@@ -41,11 +42,11 @@ export class TimeEntriesService {
     return () => Promise.all(origins.map(({ refs: back, assignment }) => this.assign(back, assignment)));
   };
 
-  /** Adds a manual period. Resolves to an undo function that removes it again. */
+  /** Adds a manual period (`end: null` = running, a manual start). Resolves to an undo function that removes it again. */
   readonly addPeriod = async (
     date: IsoDate,
     assignment: Assignment,
-    period: { start: Date; end: Date; type: PeriodType },
+    period: { start: Date; end: Date | null; type: PeriodType },
   ): Promise<() => Promise<unknown>> => {
     const entries = timeEntriesCollection(this.#db);
     const id = timeEntryId(date, assignment.projectId, assignment.projectId === null ? null : assignment.taskId);
@@ -71,6 +72,30 @@ export class TimeEntriesService {
       return before;
     });
     return () => this.setPeriodType(ref, previous);
+  };
+
+  /**
+   * Stops a running period at `end`. Resolves to an undo function that makes it running again,
+   * unless it was changed in the meantime (e.g. edited in the week view).
+   */
+  readonly stopPeriod = async (ref: PeriodRef, end: Date): Promise<() => Promise<unknown>> => {
+    const entryRef = doc(timeEntriesCollection(this.#db), ref.entryId);
+    const stoppedAt = await runTransaction(this.#db, async tx => {
+      const entry = (await tx.get(entryRef)).data();
+      const period = entry?.periods.find(p => p.id === ref.periodId);
+      if (!entry || !period) throw new Error('Period not found');
+      if (period.end !== null) return null; // already stopped (e.g. by the hook): nothing to undo
+      const updated = setPeriodEnd(entry, ref.periodId, end, new Date())!;
+      tx.set(entryRef, updated);
+      return updated.periods.find(p => p.id === ref.periodId)!.end!;
+    });
+    return () =>
+      runTransaction(this.#db, async tx => {
+        const entry = (await tx.get(entryRef)).data();
+        const period = entry?.periods.find(p => p.id === ref.periodId);
+        if (!stoppedAt || !entry || period?.end?.getTime() !== stoppedAt.getTime()) return;
+        tx.set(entryRef, setPeriodEnd(entry, ref.periodId, null, new Date())!);
+      });
   };
 
   /**
