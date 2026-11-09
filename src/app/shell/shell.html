@@ -1,27 +1,103 @@
-<div class="flex h-full">
-  <nav class="flex w-16 shrink-0 flex-col items-center gap-2 border-r border-line bg-rail py-3" [attr.aria-label]="'nav.main' | translate">
-    <img src="favicon.svg" alt="Loopme" class="mb-3 size-8" />
-    @for (item of nav; track item.path) {
-    <a
-      [routerLink]="item.path"
-      routerLinkActive="bg-accent-soft text-accent"
-      class="flex size-10 items-center justify-center rounded-full text-muted transition-colors duration-150 hover:bg-raised hover:text-ink"
-      [attr.aria-label]="item.label | translate"
-      [title]="item.label | translate">
-      <span class="material-symbols-outlined" aria-hidden="true">{{ item.icon }}</span>
-    </a>
-    }
+<div class="flex h-full flex-col md:flex-row">
+  <!-- Phone: top bar with the menu button. The rest of the page is inert while the drawer is open. -->
+  <header class="flex h-14 shrink-0 items-center gap-2 border-b border-line bg-rail px-2 md:hidden" [inert]="menuOpen()">
     <button
+      #menuButton
       type="button"
-      class="mt-auto flex size-10 items-center justify-center rounded-full text-muted transition-colors duration-150 hover:bg-raised hover:text-ink"
-      (click)="signOut()"
-      [attr.aria-label]="'nav.signOut' | translate: { email: auth.user()?.email ?? '' }"
-      [title]="'nav.signOut' | translate: { email: auth.user()?.email ?? '' }">
-      <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+      class="flex size-10 items-center justify-center rounded-full text-muted transition-colors duration-150 hover:bg-raised hover:text-ink"
+      aria-haspopup="dialog"
+      aria-controls="menu-drawer"
+      [attr.aria-expanded]="menuOpen()"
+      [attr.aria-label]="'nav.openMenu' | translate"
+      [title]="'nav.openMenu' | translate"
+      (click)="openMenu()">
+      <span class="material-symbols-outlined" aria-hidden="true">menu</span>
     </button>
+    <img src="favicon.svg" alt="Loopme" class="size-7" />
+  </header>
+
+  <!-- Desktop / tablet: icon rail. -->
+  <nav
+    class="hidden w-16 shrink-0 flex-col items-center gap-2 border-r border-line bg-rail py-3 md:flex"
+    [attr.aria-label]="'nav.main' | translate">
+    <img src="favicon.svg" alt="Loopme" class="mb-3 size-8" />
+    <ng-container *ngTemplateOutlet="navLinks; context: { labelled: false }" />
+    <div class="mt-auto">
+      <ng-container *ngTemplateOutlet="signOutButton; context: { labelled: false }" />
+    </div>
   </nav>
-  <main class="min-w-0 flex-1 overflow-auto">
+
+  <main class="min-w-0 flex-1 overflow-auto" [inert]="menuOpen()">
     <router-outlet />
   </main>
   <app-toast-host />
+
+  <!-- Phone: navigation drawer over a scrim. -->
+  @if (menuOpen()) {
+  <div
+    class="fixed inset-0 z-50 bg-scrim transition-opacity duration-200 ease-out starting:opacity-0 motion-reduce:transition-none md:hidden"
+    aria-hidden="true"
+    (click)="closeMenu(true)"></div>
+  <div
+    #drawer
+    id="menu-drawer"
+    role="dialog"
+    aria-modal="true"
+    class="fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-line bg-rail p-3 shadow-lg transition-transform duration-200 ease-out starting:-translate-x-full motion-reduce:transition-none md:hidden"
+    [attr.aria-label]="'nav.main' | translate">
+    <div class="mb-3 flex items-center gap-2">
+      <img src="favicon.svg" alt="" class="ml-1 size-8" />
+      <span class="flex-1 text-base text-ink">Loopme</span>
+      <button
+        type="button"
+        class="flex size-10 items-center justify-center rounded-full text-muted transition-colors duration-150 hover:bg-raised hover:text-ink"
+        [attr.aria-label]="'nav.closeMenu' | translate"
+        [title]="'nav.closeMenu' | translate"
+        (click)="closeMenu(true)">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </div>
+    <nav class="flex flex-col gap-1">
+      <ng-container *ngTemplateOutlet="navLinks; context: { labelled: true }" />
+    </nav>
+    <div class="mt-auto border-t border-line pt-3">
+      <p class="truncate px-4 pb-2 text-xs text-muted">{{ auth.user()?.email }}</p>
+      <ng-container *ngTemplateOutlet="signOutButton; context: { labelled: true }" />
+    </div>
+  </div>
+  }
 </div>
+
+<!--
+  Shared by the rail (icon only, name as aria-label + tooltip) and the phone drawer (icon + name).
+  `labelled` picks the variant.
+-->
+<ng-template #navLinks let-labelled="labelled">
+  @for (item of nav; track item.path) {
+  <a
+    [routerLink]="item.path"
+    routerLinkActive="bg-accent-soft text-accent"
+    ariaCurrentWhenActive="page"
+    class="flex items-center rounded-full transition-colors duration-150 hover:bg-raised"
+    [class]="labelled ? 'h-12 gap-3 px-4 text-ink' : 'size-10 justify-center text-muted hover:text-ink'"
+    [attr.aria-label]="labelled ? null : (item.label | translate)"
+    [attr.title]="labelled ? null : (item.label | translate)"
+    (click)="closeMenu()">
+    <span class="material-symbols-outlined" aria-hidden="true">{{ item.icon }}</span>
+    @if (labelled) { {{ item.label | translate }} }
+  </a>
+  }
+</ng-template>
+
+<ng-template #signOutButton let-labelled="labelled">
+  <button
+    type="button"
+    class="flex items-center rounded-full transition-colors duration-150 hover:bg-raised"
+    [class]="labelled ? 'h-12 w-full gap-3 px-4 text-ink' : 'size-10 justify-center text-muted hover:text-ink'"
+    [attr.aria-label]="'nav.signOut' | translate: { email: auth.user()?.email ?? '' }"
+    [attr.title]="labelled ? null : ('nav.signOut' | translate: { email: auth.user()?.email ?? '' })"
+    (click)="signOut()">
+    <span class="material-symbols-outlined" [class.text-muted]="labelled" aria-hidden="true">logout</span>
+    @if (labelled) { {{ 'nav.signOutShort' | translate }} }
+  </button>
+</ng-template>

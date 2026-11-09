@@ -5,7 +5,10 @@
     "week": "Uge",
     "projects": "Projekter",
     "settings": "Indstillinger",
-    "signOut": "Log ud {{email}}"
+    "signOut": "Log ud {{email}}",
+    "openMenu": "Åbn menu",
+    "closeMenu": "Luk menu",
+    "signOutShort": "Log ud"
   },
   "login": {
     "title": "Log ind",

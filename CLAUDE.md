@@ -82,6 +82,7 @@ Collections: `projects`, `tasks`, `timeEntries` (owner read/write), `devices`, `
   - Exception: Angular's signal queries and inputs/outputs (`viewChild()`, `contentChild()`, `input()`, `output()`, `model()`) can't be `#private` either (NG1053). Make queries `protected`; inputs/outputs are public.
 - **Forms**: always `<form novalidate>`. Signal forms add native `required` attributes, and without `novalidate` the browser blocks submit before Angular sees it, so our own error messages never show. Show "required" errors only after a save attempt; format errors once a field is left.
 - Prefer `inject()` over constructor parameters, so services end up as `readonly #db = inject(FIRESTORE)`.
+- **Don't repeat code or markup.** When the same template block appears twice in a component (e.g. the nav links in the rail and in the phone drawer), define it once as an `<ng-template>` and render it with `ngTemplateOutlet`, passing the differences as context (`context: { labelled: true }`). When it's needed in several components, make it a component in `src/app/ui/`. The same goes for TypeScript: shared logic goes in a helper (or `@loopme/model` when the functions need it too), not a copy.
 
 ## Environments
 
