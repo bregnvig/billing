@@ -55,6 +55,8 @@ All values come from tokens: the light values are in `src/tailwind.css` under Ta
   --color-unassigned: #b06000;    /* needs a project */
   --color-danger: #c5221f;
 
+  --color-scrim: rgb(31 31 31 / 0.4); /* behind the phone menu drawer */
+
   /* Warm greeting gradient: only for the page greeting ("Good morning, …") */
   --color-greet-from: #c26401;
   --color-greet-to: #d93025;
@@ -98,6 +100,7 @@ All values come from tokens: the light values are in `src/tailwind.css` under Ta
   --color-running: #81c995;
   --color-unassigned: #fdd663;
   --color-danger: #f28b82;
+  --color-scrim: rgb(19 19 20 / 0.7);
   --color-greet-from: #fbbc04;
   --color-greet-to: #f4511e;
 }
@@ -116,6 +119,7 @@ All values come from tokens: the light values are in `src/tailwind.css` under Ta
     --color-running: #81c995;
     --color-unassigned: #fdd663;
     --color-danger: #f28b82;
+    --color-scrim: rgb(19 19 20 / 0.7);
     --color-greet-from: #fbbc04;
     --color-greet-to: #f4511e;
   }
@@ -176,7 +180,7 @@ Both themes are first-class. The Firebase screenshots are dark, and light follow
 - **Projects page** (`/projects`): a "New project" field, then one card per project: marker + name (rename inline), color swatches (marker + color), Archive/Restore with Undo, and its tasks (name, default hours `08:00–16:00`, edit, archive) plus `Add task`. Archived projects and tasks are folded away behind a count. A task's default hours pre-fill the add-period form when that task is picked and the times are empty.
 - **Responsive**:
   - Below 1024px the day cards wrap to 2-3 columns.
-  - Below 768px the rail becomes a bottom navigation bar, the cards stack, and the day timeline gets a full-width row.
+  - Below 768px the rail is replaced by a slim top bar (`menu` button + app icon). The button opens the navigation as an **overlay drawer** from the left (icons with labels, active item highlighted, Sign out at the bottom) over a `scrim` backdrop. It closes on Esc, a backdrop tap, the close button or picking a page; focus moves into it and back to the menu button, and the page behind is `inert` while it's open. The cards stack, and the day timeline gets a full-width row.
   - Must work at 360px with no horizontal page scroll. Wide tables scroll inside their card, like the Firebase query table.
 
 ## 4. Components

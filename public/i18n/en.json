@@ -5,7 +5,10 @@
     "week": "Week",
     "projects": "Projects",
     "settings": "Settings",
-    "signOut": "Sign out {{email}}"
+    "signOut": "Sign out {{email}}",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "signOutShort": "Sign out"
   },
   "login": {
     "title": "Sign in",

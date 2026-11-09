@@ -28,6 +28,9 @@
   --color-unassigned: #b06000;
   --color-danger: #c5221f;
 
+  /* Dims the page behind the phone menu drawer */
+  --color-scrim: rgb(31 31 31 / 0.4);
+
   --color-greet-from: #c26401;
   --color-greet-to: #d93025;
 
