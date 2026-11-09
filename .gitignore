@@ -53,3 +53,6 @@ ui-debug.log
 # Cloud Functions
 functions/lib/
 functions/node_modules/
+
+# mise: personal overrides
+mise.local.toml

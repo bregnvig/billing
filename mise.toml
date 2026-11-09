@@ -1,0 +1,9 @@
+# Tool versions for this project. Run `mise install` once (and `mise trust` the first time).
+[tools]
+node = "24"           # same as CI (.github/workflows). Cloud Functions run on Node 22 (functions/package.json engines)
+npm = "11.20.0"       # same as packageManager in package.json
+java = "temurin-21"   # the Firebase emulators need Java 21+
+
+[env]
+# The project's own firebase-tools (devDependency), so `firebase` here matches CI and deploys.
+_.path = ["./node_modules/.bin"]
