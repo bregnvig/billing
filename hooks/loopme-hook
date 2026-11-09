@@ -24,6 +24,7 @@ FAILED="$STATE_DIR/failed.jsonl"
 LOG="$STATE_DIR/hook.log"
 POLL_SECONDS="${LOOPME_POLL_SECONDS:-10}"
 FLUSH_EVERY_POLLS=6 # flush roughly every minute while watching
+PING_SECONDS=20
 
 mkdir -p "$STATE_DIR"
 chmod 700 "$STATE_DIR"
@@ -57,10 +58,11 @@ timezone() {
   echo "${tz:-UTC}"
 }
 
-# POST a JSON body; prints the HTTP status (000 = no connection).
+# POST a JSON body; prints the HTTP status (000 = no connection or no answer in time).
+# Optional 2nd argument: seconds to wait for an answer (default 5; queued events are retried anyway).
 post() {
   curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
-    --max-time 5 --connect-timeout 3 \
+    --max-time "${2:-5}" --connect-timeout 3 \
     -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
     --data-binary "$1" "$LOOPME_URL" 2>/dev/null || true
 }
@@ -127,11 +129,13 @@ event() {
 ping_server() {
   load_config
   local code
-  code="$(post '{"type":"ping"}')"
+  # Longer than for events: a cold start of the Cloud Function can take more than 5s, and a
+  # ping (unlike a queued event) isn't retried.
+  code="$(post '{"type":"ping"}' "$PING_SECONDS")"
   case "$code" in
     200) echo "OK: $LOOPME_URL accepted the token." ;;
     401) die "the token was refused (unknown or revoked device). Add the device again in Settings." ;;
-    000) die "can't reach $LOOPME_URL. Is the emulator (or network) up?" ;;
+    000) die "no answer from $LOOPME_URL within ${PING_SECONDS}s. Check the network (or that the emulator is up) and try again." ;;
     *) die "unexpected HTTP $code from $LOOPME_URL" ;;
   esac
 }
