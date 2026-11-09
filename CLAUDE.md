@@ -99,6 +99,7 @@ Collections: `projects`, `tasks`, `timeEntries` (owner read/write), `devices`, `
 
 ## Commands
 
+- **Tools come from mise** (`mise.toml`): Node 24 (as in CI), npm 11.20.0 (as `packageManager`) and Java 21 (Temurin, for the emulators). First time: `mise trust && mise install`, then `npm ci && npm ci --prefix functions`. `node_modules/.bin` is on the PATH, so `firebase` is the project's own firebase-tools. Keep Node in `mise.toml` and the workflows' `node-version` in sync.
 - `npm run emulators`: build the functions and start the Firebase emulators (UI at http://127.0.0.1:4100, Firestore 8180, Auth 9199, Functions 5101). Data is saved to `.firebase-data/` on exit. The ports are non-default because the F2020 project's emulator uses the defaults.
 - `npm run kill-ports`: force-kills whatever listens on this project's emulator ports (same approach as F2020, via `kill-port`). It's `kill -9`, so the emulator does **not** export data; prefer Ctrl+C and use this only when the emulator won't die.
 - `npm start`: dev server (`ng serve`). Expects the emulators to be running
