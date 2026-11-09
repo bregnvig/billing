@@ -3,7 +3,19 @@
  * Pure logic: no Firebase here, so it can be unit-tested. `report-event.ts` loads the
  * entries, calls `applyEvent` inside a transaction and writes the result.
  */
-import { addDays, HookEvent, HookEventResult, IsoDate, isoDateIn, Period, startOfDayIn, TimeEntry, timeEntryId } from '@loopme/model';
+import {
+  addDays,
+  CARRY_OVER_DAYS,
+  continuingAssignment,
+  HookEvent,
+  HookEventResult,
+  IsoDate,
+  isoDateIn,
+  Period,
+  startOfDayIn,
+  TimeEntry,
+  timeEntryId,
+} from '@loopme/model';
 
 export interface Outcome {
   result: Exclude<HookEventResult, 'duplicate'>;
@@ -12,7 +24,7 @@ export interface Outcome {
 }
 
 /** How far back to look for a running period. Older running periods are left alone. */
-export const LOOKBACK_DAYS = 7;
+export const LOOKBACK_DAYS = CARRY_OVER_DAYS;
 
 const byStart = (a: Period, b: Period) => a.start.getTime() - b.start.getTime();
 
@@ -85,11 +97,6 @@ export const applyEvent = (entries: TimeEntry[], event: HookEvent, now: Date): O
     }
   };
 
-  /** The entry of the most recently started work period, for carrying its project/task over. */
-  const previous = [...all.values()]
-    .flatMap(entry => entry.periods.filter(p => p.type === 'work' && p.start <= event.at).map(period => ({ entry, period })))
-    .sort((a, b) => byStart(b.period, a.period))[0]?.entry;
-
   if (event.type === 'start') {
     if (running) {
       if (running.entry.date === today) return { result: 'already-running', writes: [] };
@@ -97,7 +104,8 @@ export const applyEvent = (entries: TimeEntry[], event: HookEvent, now: Date): O
       running.period.end = endOfItsDay;
       touch(running.entry);
     }
-    const target = entryFor(today, previous?.projectId ?? null, previous?.taskId ?? null);
+    const { projectId, taskId } = continuingAssignment([...all.values()], event.at);
+    const target = entryFor(today, projectId, taskId);
     target.periods.push({
       id: event.eventId,
       start: event.at,

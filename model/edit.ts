@@ -111,6 +111,33 @@ export const setPeriodType = (entry: TimeEntry, periodId: string, type: Period['
   return { ...structuredClone(entry), periods: entry.periods.map(p => (p.id === periodId ? { ...p, type } : p)), updatedAt: now };
 };
 
+/**
+ * Sets a period's end: a time to stop it, or `null` to make it running again (undo of a stop).
+ * The end is never before the start. Returns the updated entry, or null if the period isn't found.
+ */
+export const setPeriodEnd = (entry: TimeEntry, periodId: string, end: Date | null, now: Date): TimeEntry | null => {
+  const period = entry.periods.find(p => p.id === periodId);
+  if (!period) return null;
+  const clamped = end && end < period.start ? period.start : end;
+  return { ...structuredClone(entry), periods: entry.periods.map(p => (p.id === periodId ? { ...p, end: clamped } : p)), updatedAt: now };
+};
+
+/** How many days back a new period looks for the work it continues (see `continuingAssignment`). */
+export const CARRY_OVER_DAYS = 7;
+
+/**
+ * Where a newly started period goes: the project + task of the most recently started work period
+ * up to `at` (breaks skipped), since you're most likely continuing that work. Unassigned when
+ * there's none. Pass only the entries of the last `CARRY_OVER_DAYS` days. Shared by the OS hook's
+ * start and the manual Start on the overview.
+ */
+export const continuingAssignment = (entries: readonly TimeEntry[], at: Date): Assignment => {
+  const previous = entries
+    .flatMap(entry => entry.periods.filter(p => p.type === 'work' && p.start <= at).map(period => ({ entry, period })))
+    .sort((a, b) => b.period.start.getTime() - a.period.start.getTime())[0]?.entry;
+  return previous?.projectId ? { projectId: previous.projectId, taskId: previous.taskId } : { projectId: null, taskId: null };
+};
+
 export interface Gap {
   start: Date;
   end: Date;

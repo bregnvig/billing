@@ -35,6 +35,13 @@
     "worked": "Arbejdet",
     "soFar": "indtil nu",
     "runningSince": "Kører siden {{time}}",
+    "stop": "Stop",
+    "stopAria": "Stop perioden, der har kørt siden {{time}}",
+    "stopped": "Stoppet kl. {{time}}",
+    "start": "Start",
+    "startAria": "Start en arbejdsperiode nu",
+    "startedOn": "Startet kl. {{time}} på {{name}}",
+    "startedUnassigned": "Startet kl. {{time}}, ikke tildelt",
     "unassigned": "{{duration}} ikke tildelt",
     "today": {
       "title": "I dag",
