@@ -29,13 +29,22 @@ const entry = (date: string, periods: TimeEntry['periods'], projectId: string | 
 const running = (id: string, start: Date) => ({ id, start, end: null, type: 'work', source: 'hook' }) as const;
 
 describe('applyEvent: start', () => {
-  it("opens a running period in the day's unassigned entry", () => {
+  it("opens a running period in the day's unassigned entry, 5 minutes early as the day's first", () => {
     const at = cph('2026-11-05', '08:02');
     const { result, writes } = applyEvent([], event('start', at, 'ev1'), now);
     expect(result).toBe('started');
     expect(writes).toHaveLength(1);
     expect(writes[0].id).toBe('2026-11-05__');
-    expect(writes[0].periods).toEqual([running('ev1', at)]);
+    expect(writes[0].periods).toEqual([running('ev1', cph('2026-11-05', '07:57'))]);
+  });
+
+  it('starts later periods of the day exactly at the event', () => {
+    const existing = entry('2026-11-05', [
+      { id: 'p1', start: cph('2026-11-05', '08:00'), end: cph('2026-11-05', '11:45'), type: 'work', source: 'hook' },
+    ]);
+    const at = cph('2026-11-05', '12:15');
+    const { writes } = applyEvent([existing], event('start', at, 'ev2'), now);
+    expect(writes[0].periods[1].start).toEqual(at);
   });
 
   it('appends to an existing unassigned entry', () => {

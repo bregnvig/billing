@@ -16,6 +16,7 @@ import {
   TimeEntry,
   timeEntryId,
 } from '@loopme/model';
+import { paddedStart } from './day-edges';
 
 export interface Outcome {
   result: Exclude<HookEventResult, 'duplicate'>;
@@ -34,7 +35,8 @@ const byStart = (a: Period, b: Period) => a.start.getTime() - b.start.getTime();
  * - start: opens a new running work period, unless one is already running today. It's its own
  *   period (own start/stop), but goes into the entry of the same project + task as the most
  *   recent work period (within LOOKBACK_DAYS), since you're most likely continuing that work.
- *   With no previous work period, or an unassigned one, it lands in the day's unassigned entry. A running period left over from an earlier day (missed stop, e.g. power
+ *   With no previous work period, or an unassigned one, it lands in the day's unassigned entry.
+ *   The day's first period starts `DAY_EDGE_PAD_MS` early (day-edges.ts). A running period left over from an earlier day (missed stop, e.g. power
  *   loss) is closed at the end of its own day first, so it stands out for correction.
  * - stop: closes the running period. If it started yesterday (working past midnight), it's
  *   split at local midnight so each day's entry only holds that day's time. If it started
@@ -108,7 +110,8 @@ export const applyEvent = (entries: TimeEntry[], event: HookEvent, now: Date): O
     const target = entryFor(today, projectId, taskId);
     target.periods.push({
       id: event.eventId,
-      start: event.at,
+      // The day's first period starts a few minutes early (see day-edges.ts).
+      start: paddedStart([...all.values()], event.at, today, event.tz),
       end: null,
       type: 'work',
       source: 'hook',

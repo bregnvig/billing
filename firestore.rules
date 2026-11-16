@@ -34,5 +34,9 @@ service cloud.firestore {
     match /deviceTokens/{id} {
       allow read, write: if false;
     }
+    // Days whose last period the nightly padDayEnds function handled. Cloud Functions only.
+    match /dayEnds/{id} {
+      allow read, write: if false;
+    }
   }
 }
