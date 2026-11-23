@@ -190,14 +190,16 @@
     "openAll": "Åbn alle dage",
     "closeAll": "Luk tidligere dage",
     "commits": {
-      "fetch": "Hent fra commits",
-      "fetching": "Henter…",
-      "hint": "Tildel dagens ikke-tildelte tid ud fra dine GitHub-commits",
       "done": "{{commits}} commits: {{assigned}} tildelt, {{left}} stadig ikke tildelt",
       "none": "Ingen commits fundet den dag",
       "tag": "tildelt fra commits",
       "overwrite": "Overskriv",
-      "overwriteHint": "Hent fra commits laver også det om, den har tildelt før. Tid, du selv har tildelt, ændres aldrig."
+      "overwriteHint": "Synkroniser laver også det om, som commits har tildelt før. Tid, du selv har tildelt, ændres aldrig.",
+      "sync": "Synkroniser",
+      "syncing": "Synkroniserer…",
+      "syncHint": "Tildel dagens ikke-tildelte tid ud fra dine GitHub-commits",
+      "syncOverwriteHint": "Lav dagen om ud fra dine GitHub-commits, også det, de har tildelt før",
+      "group": "Synkroniser fra GitHub-commits"
     }
   },
   "picker": {

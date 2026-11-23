@@ -220,7 +220,6 @@ export class WeekPage {
             items,
             breakdown: [...byProject.values()].sort((a, b) => b.work - a.work),
             unassignedRefs: rows.filter(r => r.projectId === null && r.type === 'work').map(r => r.ref),
-            fromCommits: rows.some(r => r.fromCommits),
           };
         })
         .map(day => {
@@ -294,18 +293,29 @@ export class WeekPage {
     return { target, name };
   };
 
-  /** The day whose commits are being fetched, if any. */
-  protected readonly fetchingCommits = signal<IsoDate | null>(null);
-  /** "Overwrite": Fetch from commits also redoes what it assigned before (never what you assigned). */
-  protected readonly overwrite = signal(false);
+  /** The day being synced from commits, if any. */
+  protected readonly syncing = signal<IsoDate | null>(null);
+  /** Days whose "Overwrite" toggle is on: Sync then also redoes what it assigned before. */
+  readonly #overwrite = signal(new Set<IsoDate>());
+  protected readonly overwriting = (date: IsoDate): boolean => this.#overwrite().has(date);
+  protected readonly setOverwrite = (date: IsoDate, on: boolean): void =>
+    this.#overwrite.update(days => {
+      const next = new Set(days);
+      if (on) next.add(date);
+      else next.delete(date);
+      return next;
+    });
 
-  /** Fetches the day's GitHub commits and assigns its unassigned time by them (Cloud Function). */
-  protected readonly assignFromCommits = async (date: IsoDate): Promise<void> => {
-    if (this.fetchingCommits()) return;
-    this.fetchingCommits.set(date);
+  /**
+   * Assigns the day's unassigned time from its GitHub commits (Cloud Function). Only with the day's
+   * "Overwrite" toggle on does it also redo what it assigned before; time you assigned is never changed.
+   */
+  protected readonly sync = async (date: IsoDate): Promise<void> => {
+    if (this.syncing()) return;
+    this.syncing.set(date);
     this.actionError.set(null);
     try {
-      const result = await this.#commits.assignDay(date, this.overwrite());
+      const result = await this.#commits.assignDay(date, this.overwriting(date));
       this.#toasts.show({
         message: result.commits ? 'weekView.commits.done' : 'weekView.commits.none',
         params: { commits: result.commits, assigned: result.assigned, left: result.left },
@@ -313,7 +323,7 @@ export class WeekPage {
     } catch {
       this.actionError.set('weekView.errors.commits');
     } finally {
-      this.fetchingCommits.set(null);
+      this.syncing.set(null);
     }
   };
 
