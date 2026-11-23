@@ -23,10 +23,10 @@
             class="flex h-9 items-center gap-1 rounded-full px-4 text-accent transition-colors duration-150 hover:bg-accent-soft disabled:opacity-60"
             [disabled]="!!fetching()"
             [attr.aria-busy]="fetching() === day.date"
-            [title]="'weekView.commits.hint' | translate"
+            [title]="'weekView.commits.syncHint' | translate"
             (click)="fetch(day.date)">
-            <span class="material-symbols-outlined" aria-hidden="true">commit</span>
-            {{ (fetching() === day.date ? 'weekView.commits.fetching' : 'weekView.commits.fetch') | translate }}
+            <span class="material-symbols-outlined" [class.animate-spin]="fetching() === day.date" aria-hidden="true">sync</span>
+            {{ (fetching() === day.date ? 'weekView.commits.syncing' : 'weekView.commits.sync') | translate }}
           </button>
           <a
             class="flex h-9 items-center gap-1 rounded-full bg-raised px-4 transition-colors duration-150 hover:bg-line"
