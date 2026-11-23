@@ -1,18 +1,8 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import {
-  addDays,
-  commitWindowEnd,
-  datesBetween,
-  IsoDate,
-  startOfWeek,
-  stillRetried,
-  TimeEntry,
-  toIsoDate,
-  UnassignedReason,
-  whyUnassigned,
-} from '@loopme/model';
+import { addDays, IsoDate, startOfWeek, TimeEntry, toIsoDate } from '@loopme/model';
 import { TranslatePipe } from '@ngx-translate/core';
+import { commitDayMap, dayCommits, reasonText, unassignedReason } from '../data/commit-insight';
 import { CommitsService, syncToast } from '../data/commits.service';
 import { liveCommitDays, liveRepoRules } from '../data/live';
 import { LanguageService } from '../i18n/language.service';
@@ -56,7 +46,7 @@ export class NeedsProjectCard {
 
   protected readonly days = computed(() => {
     const { from, to, today } = this.#range();
-    const commitDays = new Map((this.#commitDays.value() ?? []).map(d => [d.id, d.commits]));
+    const commitDays = commitDayMap(this.#commitDays.value());
     const rules = this.#rules.value() ?? [];
     const byDay = new Map<IsoDate, { start: Date; end: Date }[]>();
     for (const entry of this.entries()) {
@@ -68,18 +58,14 @@ export class NeedsProjectCard {
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([date, periods]) => {
         const start = dayStart(date);
-        // The day's commits and those of the days after it that are fetched (model/commits.ts).
-        const own = commitDays.get(date);
-        const commits = own ? datesBetween(date, addDays(commitWindowEnd(date), -1)).flatMap(d => commitDays.get(d) ?? []) : null;
-        const windowEnd = dayStart(commitWindowEnd(date));
-        const retrying = stillRetried(date, today);
+        const day = dayCommits(date, commitDays, today);
         const rows = periods
           .sort((a, b) => a.start.getTime() - b.start.getTime())
           .map(p => ({
             key: p.start.getTime(),
             time: `${formatTime(p.start)}–${formatTime(p.end)}`,
             duration: formatDuration(p.end.getTime() - p.start.getTime()),
-            reason: whyUnassigned(p, commits, rules, start, windowEnd, retrying),
+            reason: reasonText(unassignedReason(p, day, rules)),
           }));
         return {
           date,
@@ -90,9 +76,6 @@ export class NeedsProjectCard {
         };
       });
   });
-
-  protected readonly reasonKey = (reason: UnassignedReason): string => `overview.needsProject.reason.${reason.kind}`;
-  protected readonly reasonRepos = (reason: UnassignedReason): string => ('repos' in reason ? reason.repos.join(', ') : '');
 
   /** The day whose commits are being fetched, if any. */
   protected readonly fetching = signal<IsoDate | null>(null);

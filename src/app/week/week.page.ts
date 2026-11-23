@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import {
   addDays,
   Assignment,
+  COMMIT_LOOKAHEAD_DAYS,
   dailyTotals,
   datesBetween,
   gapsBetween,
@@ -16,8 +17,9 @@ import {
   weekdayIndex,
 } from '@loopme/model';
 import { TranslatePipe } from '@ngx-translate/core';
+import { commitDayMap, DayCommits, dayCommits, reasonText, unassignedReason } from '../data/commit-insight';
 import { CommitsService, syncToast } from '../data/commits.service';
-import { liveEntries, liveProjects, liveTasks } from '../data/live';
+import { liveCommitDays, liveEntries, liveProjects, liveRepoRules, liveTasks } from '../data/live';
 import { ProjectsService } from '../data/projects.service';
 import { TimeEntriesService } from '../data/time-entries.service';
 import { LanguageService } from '../i18n/language.service';
@@ -27,6 +29,7 @@ import { formatDay, formatDuration, formatLongDate, formatRange, formatTime } fr
 import { Marker, PROJECT_COLORS } from '../ui/marker';
 import { PickerResult, ProjectPicker } from '../ui/project-picker';
 import { AddPeriodForm, NewPeriod } from './add-period-form';
+import { CommitStretches } from './commit-stretches';
 import { ToastService } from '../ui/toast.service';
 
 /** Local midnight of an IsoDate. */
@@ -47,6 +50,8 @@ export interface PeriodRow extends TimelinePeriod {
   endText: string | null;
   /** Assigned by the commit matching (not by you): "Overwrite" may redo it. */
   fromCommits: boolean;
+  /** For finished unassigned work: why the commits didn't assign it (translation key + params). */
+  reason: ReturnType<typeof reasonText> | null;
 }
 
 /** Unrecorded time between periods (locked, asleep, away): can be counted as work. */
@@ -71,7 +76,7 @@ interface Editing {
 /** The week view: every period of the week, assignable to projects. */
 @Component({
   selector: 'app-week-page',
-  imports: [TranslatePipe, DayTimeline, Marker, ProjectPicker, AddPeriodForm],
+  imports: [TranslatePipe, DayTimeline, Marker, ProjectPicker, AddPeriodForm, CommitStretches],
   templateUrl: './week.page.html',
   styleUrl: './week.page.scss',
   host: { '(document:keydown)': 'onKeydown($event)' },
@@ -98,6 +103,13 @@ export class WeekPage {
   readonly #entries = liveEntries(this.#range);
   readonly #projectsLive = liveProjects();
   readonly #tasksLive = liveTasks();
+  /** The week's fetched commits, plus the days after it whose commits may decide the end of a day. */
+  readonly #commitDaysLive = liveCommitDays(
+    computed(() => ({ from: this.#range().from, to: addDays(this.#range().to, COMMIT_LOOKAHEAD_DAYS) })),
+  );
+  readonly #rulesLive = liveRepoRules();
+  protected readonly repoRules = computed(() => this.#rulesLive.value() ?? []);
+  readonly #commitDays = computed(() => commitDayMap(this.#commitDaysLive.value()));
 
   protected readonly projects = computed(() => this.#projectsLive.value() ?? []);
   protected readonly tasks = computed(() => this.#tasksLive.value() ?? []);
@@ -162,6 +174,7 @@ export class WeekPage {
     return (
       datesBetween(this.weekStart(), addDays(this.weekStart(), 6))
         .map(date => {
+          const commits: DayCommits = dayCommits(date, this.#commitDays(), this.#today());
           const rows: PeriodRow[] = entries
             .filter(e => e.date === date)
             .flatMap(entry => {
@@ -183,6 +196,10 @@ export class WeekPage {
                 startText: formatTime(period.start),
                 endText: period.end ? formatTime(period.end) : null,
                 fromCommits: period.assignedBy === 'commits',
+                reason:
+                  entry.projectId === null && period.type === 'work' && period.end
+                    ? reasonText(unassignedReason({ start: period.start, end: period.end }, commits, this.repoRules()))
+                    : null,
               }));
             })
             .sort((a, b) => a.start.getTime() - b.start.getTime());
@@ -220,6 +237,9 @@ export class WeekPage {
             items,
             breakdown: [...byProject.values()].sort((a, b) => b.work - a.work),
             unassignedRefs: rows.filter(r => r.projectId === null && r.type === 'work').map(r => r.ref),
+            commits,
+            /** The day's own commits, or null when not fetched. */
+            commitCount: this.#commitDays().get(date)?.length ?? null,
           };
         })
         .map(day => {
@@ -292,6 +312,16 @@ export class WeekPage {
     if (name && target.taskId) name = `${name} / ${this.#names().tasks.get(target.taskId) ?? ''}`;
     return { target, name };
   };
+
+  /** Days whose Commits panel is open. */
+  readonly #showCommits = signal(new Set<IsoDate>());
+  protected readonly showingCommits = (date: IsoDate): boolean => this.#showCommits().has(date);
+  protected readonly toggleCommits = (date: IsoDate): void =>
+    this.#showCommits.update(days => {
+      const next = new Set(days);
+      if (!next.delete(date)) next.add(date);
+      return next;
+    });
 
   /** The day being synced from commits, if any. */
   protected readonly syncing = signal<IsoDate | null>(null);

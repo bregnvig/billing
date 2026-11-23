@@ -43,7 +43,7 @@
           <span class="tabular-nums">{{ row.time }}</span>
           <span class="text-muted tabular-nums">{{ row.duration }}</span>
           <span class="text-muted">
-            {{ reasonKey(row.reason) | translate: { repos: reasonRepos(row.reason) } }} @if (row.reason.kind === 'unmapped') {
+            {{ row.reason.key | translate: row.reason.params }} @if (row.reason.kind === 'unmapped') {
             <a routerLink="/projects" class="text-accent underline-offset-2 hover:underline">
               {{ 'overview.needsProject.mapRepo' | translate }}
             </a>

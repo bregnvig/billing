@@ -202,7 +202,15 @@
       "group": "Sync from GitHub commits",
       "nothing": "No finished time to assign that day",
       "allAssigned": "All of that day's time is already on a project. Turn on Overwrite to redo it from the commits.",
-      "allTyped": "Only periods you typed in by hand are left. Those are never overwritten."
+      "allTyped": "Only periods you typed in by hand are left. Those are never overwritten.",
+      "panelTitle": "Commits",
+      "panelHint": "A commit claims the time since your previous commit. Commits for different projects less than 15 minutes apart are inconclusive. The time after a day's last commit waits up to 3 days for your next commit.",
+      "notFetched": "The day's commits haven't been fetched yet. Sync to fetch them.",
+      "noneThatDay": "No commits that day.",
+      "list": "Commits",
+      "show": "Show commits ({{count}})",
+      "showNotFetched": "Show commits",
+      "hide": "Hide commits"
     }
   },
   "picker": {
