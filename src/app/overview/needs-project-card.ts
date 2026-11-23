@@ -4,7 +4,8 @@ import { addDays, IsoDate, startOfWeek, TimeEntry, toIsoDate } from '@loopme/mod
 import { TranslatePipe } from '@ngx-translate/core';
 import { commitDayMap, dayCommits, reasonText, unassignedReason } from '../data/commit-insight';
 import { CommitsService, syncToast } from '../data/commits.service';
-import { liveCommitDays, liveRepoRules } from '../data/live';
+import { liveCommitDays } from '../data/live';
+import { LiveCatalog } from '../data/live-catalog';
 import { LanguageService } from '../i18n/language.service';
 import { formatDay, formatDuration, formatTime } from '../ui/format';
 import { ToastService } from '../ui/toast.service';
@@ -42,12 +43,12 @@ export class NeedsProjectCard {
   );
   /** Up to today: a later day's commits decide the end of an earlier one. */
   readonly #commitDays = liveCommitDays(computed(() => ({ from: this.#range().from, to: this.#range().today })));
-  readonly #rules = liveRepoRules();
+  readonly #rules = inject(LiveCatalog).repoRules;
 
   protected readonly days = computed(() => {
     const { from, to, today } = this.#range();
     const commitDays = commitDayMap(this.#commitDays.value());
-    const rules = this.#rules.value() ?? [];
+    const rules = this.#rules();
     const byDay = new Map<IsoDate, { start: Date; end: Date }[]>();
     for (const entry of this.entries()) {
       if (entry.projectId !== null || entry.date < from || entry.date > to) continue;

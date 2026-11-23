@@ -19,7 +19,8 @@ import {
 import { TranslatePipe } from '@ngx-translate/core';
 import { commitDayMap, DayCommits, dayCommits, reasonText, unassignedReason } from '../data/commit-insight';
 import { CommitsService, syncToast } from '../data/commits.service';
-import { liveCommitDays, liveEntries, liveProjects, liveRepoRules, liveTasks } from '../data/live';
+import { LiveCatalog } from '../data/live-catalog';
+import { liveCommitDays, liveEntries } from '../data/live';
 import { ProjectsService } from '../data/projects.service';
 import { TimeEntriesService } from '../data/time-entries.service';
 import { LanguageService } from '../i18n/language.service';
@@ -101,19 +102,17 @@ export class WeekPage {
     equal: (a, b) => a.from === b.from && a.to === b.to,
   });
   readonly #entries = liveEntries(this.#range);
-  readonly #projectsLive = liveProjects();
-  readonly #tasksLive = liveTasks();
+  readonly #catalog = inject(LiveCatalog);
   /** The week's fetched commits, plus the days after it whose commits may decide the end of a day. */
   readonly #commitDaysLive = liveCommitDays(
     computed(() => ({ from: this.#range().from, to: addDays(this.#range().to, COMMIT_LOOKAHEAD_DAYS) })),
   );
-  readonly #rulesLive = liveRepoRules();
-  protected readonly repoRules = computed(() => this.#rulesLive.value() ?? []);
+  protected readonly repoRules = this.#catalog.repoRules;
   readonly #commitDays = computed(() => commitDayMap(this.#commitDaysLive.value()));
 
-  protected readonly projects = computed(() => this.#projectsLive.value() ?? []);
-  protected readonly tasks = computed(() => this.#tasksLive.value() ?? []);
-  protected readonly error = computed(() => this.#entries.error() ?? this.#projectsLive.error() ?? this.#tasksLive.error());
+  protected readonly projects = this.#catalog.projects;
+  protected readonly tasks = this.#catalog.tasks;
+  protected readonly error = computed(() => this.#entries.error() ?? this.#catalog.error());
   protected readonly loaded = computed(() => this.#entries.value() !== null);
   protected readonly isThisWeek = computed(() => this.weekStart() === startOfWeek(this.#today()));
 

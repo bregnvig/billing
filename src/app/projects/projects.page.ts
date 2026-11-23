@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { projectNameProblem } from '@loopme/model';
 import { TranslatePipe } from '@ngx-translate/core';
-import { liveProjects, liveRepoRules, liveTasks } from '../data/live';
+import { LiveCatalog } from '../data/live-catalog';
 import { ProjectsService } from '../data/projects.service';
 import { PROJECT_COLORS } from '../ui/marker';
 import { ProjectCard } from './project-card';
@@ -14,15 +14,13 @@ import { ProjectCard } from './project-card';
 })
 export class ProjectsPage {
   readonly #service = inject(ProjectsService);
-  readonly #projects = liveProjects();
-  readonly #tasks = liveTasks();
-  readonly #rules = liveRepoRules();
+  readonly #catalog = inject(LiveCatalog);
 
-  protected readonly loaded = computed(() => this.#projects.value() !== null && this.#tasks.value() !== null);
-  protected readonly loadError = computed(() => this.#projects.error() ?? this.#tasks.error());
-  protected readonly projects = computed(() => this.#projects.value() ?? []);
-  protected readonly tasks = computed(() => this.#tasks.value() ?? []);
-  protected readonly repoRules = computed(() => this.#rules.value() ?? []);
+  protected readonly loaded = computed(() => this.#catalog.projectsLoaded() && this.#catalog.tasksLoaded());
+  protected readonly loadError = this.#catalog.error;
+  protected readonly projects = this.#catalog.projects;
+  protected readonly tasks = this.#catalog.tasks;
+  protected readonly repoRules = this.#catalog.repoRules;
   /** Each project with the color it's shown in (by position when it has none). */
   readonly #withColors = computed(() =>
     this.projects().map((project, i) => ({ project, color: project.color ?? PROJECT_COLORS[i % PROJECT_COLORS.length] })),

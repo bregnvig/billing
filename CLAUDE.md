@@ -64,6 +64,8 @@ Collections: `projects`, `tasks`, `timeEntries`, `repoRules` (owner read/write),
 - Firebase JS SDK, exposed through injection tokens in `src/app/firebase/`:
   - `firebase.providers.ts` (startup, root): only the app and **Auth** (`FIREBASE_APP`, `FIREBASE_AUTH`), since the guards need Auth right away.
   - `firebase-data.providers.ts` (lazy): **Firestore and Functions** (`FIRESTORE`, `FIREBASE_FUNCTIONS`), provided on the lazy shell route (`shell/shell.routes.ts`) with the services that use them (`ProjectsService`, `TimeEntriesService`, `DevicesService`). That keeps ~580 kB of SDK out of the initial bundle.
+  - Firestore uses a **persistent local cache** (IndexedDB, shared by tabs), so reloads and revisits only fetch what changed. Signing out deletes it (`clearLocalData`) and reloads the page.
+  - **Projects, tasks and repo rules are read once per session** through `LiveCatalog` (`src/app/data/live-catalog.ts`, provided on the shell route). Pages inject it instead of calling `liveProjects()` etc., so navigating doesn't re-read them. Time entries and commit days stay per page (their date ranges differ).
   - **Never import `firebase/firestore` or `firebase/functions` (or `firebase-data.providers.ts`) from startup code** (app.config, root services, guards, login): it pulls them back into `main`. Services that need Firestore are `@Injectable()` and listed in the shell route's providers, not `providedIn: 'root'`.
 - Vitest for unit tests (`npm test`)
 - Prettier: see `.prettierrc` (140 char width, single quotes, `arrowParens: avoid`)

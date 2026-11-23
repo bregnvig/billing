@@ -1,8 +1,9 @@
 import { Component, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../auth/auth.service';
+import { clearLocalData, FIRESTORE } from '../firebase/firebase-data.providers';
 import { ToastHost } from '../ui/toast-host';
 
 /** Tailwind's `md` breakpoint: from here the icon rail shows instead of the phone menu. */
@@ -20,7 +21,7 @@ const DESKTOP = '(min-width: 768px)';
   templateUrl: './shell.html',
 })
 export class Shell {
-  readonly #router = inject(Router);
+  readonly #firestore = inject(FIRESTORE);
   protected readonly auth = inject(AuthService);
   protected readonly nav = [
     { path: '/overview', icon: 'dashboard', label: 'nav.overview' },
@@ -58,9 +59,15 @@ export class Shell {
     if (returnFocus) setTimeout(() => this.menuButton()?.nativeElement.focus());
   };
 
+  /**
+   * Signs out, deletes the local Firestore cache (so your data doesn't stay in the browser) and
+   * reloads on the login page, which also drops the live listeners. If another tab still uses the
+   * cache it can't be deleted; signing out still works.
+   */
   protected readonly signOut = async (): Promise<void> => {
     this.closeMenu();
     await this.auth.signOut();
-    await this.#router.navigateByUrl('/login');
+    await clearLocalData(this.#firestore).catch(() => undefined);
+    window.location.assign('/login');
   };
 }
