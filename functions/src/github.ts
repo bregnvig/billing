@@ -7,7 +7,7 @@
  *    pushed to since the day started: repo + head commit of each push;
  * 2. for each, the commits you authored from that head back to the start of the day.
  * Commits are timed by their author date (when they were written, kept through rebases).
- * Commits pushed after the run are picked up by the next run (or Fetch from commits in the week view).
+ * Commits pushed after the run are picked up by the next run (or Sync in the week view).
  */
 import { Commit, normalizeRepo } from '@loopme/model';
 

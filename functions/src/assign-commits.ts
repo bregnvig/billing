@@ -144,7 +144,7 @@ export const assignFromCommitsNightly = onSchedule(
 );
 
 /**
- * The same for one day, on demand ("Fetch from commits" in the week view and on the overview).
+ * The same for one day, on demand ("Sync" in the week view and on the overview).
  * `{ date, tz, overwrite? }`. Owner only.
  */
 export const assignFromCommits = onCall({ ...functionOptions, secrets: [githubToken] }, async request => {
