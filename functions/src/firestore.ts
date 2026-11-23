@@ -16,6 +16,7 @@ export const entryFromDoc = (id: string, data: DocumentData): TimeEntry => ({
     end: toDate(p['end']),
     type: p['type'] ?? 'work',
     source: p['source'] ?? 'manual',
+    ...(p['assignedBy'] === 'commits' && { assignedBy: 'commits' as const }),
   })),
   note: data['note'] ?? null,
   createdAt: toDate(data['createdAt']) ?? new Date(0),

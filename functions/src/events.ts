@@ -5,7 +5,6 @@
  */
 import {
   addDays,
-  CARRY_OVER_DAYS,
   continuingAssignment,
   HookEvent,
   HookEventResult,
@@ -25,7 +24,7 @@ export interface Outcome {
 }
 
 /** How far back to look for a running period. Older running periods are left alone. */
-export const LOOKBACK_DAYS = CARRY_OVER_DAYS;
+export const LOOKBACK_DAYS = 7;
 
 const byStart = (a: Period, b: Period) => a.start.getTime() - b.start.getTime();
 
@@ -34,8 +33,9 @@ const byStart = (a: Period, b: Period) => a.start.getTime() - b.start.getTime();
  *
  * - start: opens a new running work period, unless one is already running today. It's its own
  *   period (own start/stop), but goes into the entry of the same project + task as the most
- *   recent work period (within LOOKBACK_DAYS), since you're most likely continuing that work.
- *   With no previous work period, or an unassigned one, it lands in the day's unassigned entry.
+ *   recent work period *of the same day*, since you're most likely continuing that work. The
+ *   day's first period, or one after an unassigned period, lands in the day's unassigned entry
+ *   (the nightly `assignFromCommits` sorts it out).
  *   The day's first period starts `DAY_EDGE_PAD_MS` early (day-edges.ts). A running period left over from an earlier day (missed stop, e.g. power
  *   loss) is closed at the end of its own day first, so it stands out for correction.
  * - stop: closes the running period. If it started yesterday (working past midnight), it's
@@ -106,7 +106,7 @@ export const applyEvent = (entries: TimeEntry[], event: HookEvent, now: Date): O
       running.period.end = endOfItsDay;
       touch(running.entry);
     }
-    const { projectId, taskId } = continuingAssignment([...all.values()], event.at);
+    const { projectId, taskId } = continuingAssignment([...all.values()], event.at, today);
     const target = entryFor(today, projectId, taskId);
     target.periods.push({
       id: event.eventId,

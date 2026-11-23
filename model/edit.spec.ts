@@ -115,18 +115,37 @@ describe('addPeriod / removePeriod / overlapping', () => {
   });
 });
 
+describe('movePeriods: assigning yourself', () => {
+  it('drops the mark from the commit matching', () => {
+    const marked = entry(null, null, [{ ...p('a', 9), assignedBy: 'commits' }]);
+    const { writes } = movePeriods([marked], [{ entryId: marked.id, periodId: 'a' }], { projectId: 'acme', taskId: null }, now);
+    expect(writes[0].periods[0].assignedBy).toBeUndefined();
+  });
+});
+
 describe('continuingAssignment', () => {
   it('continues the most recent work period up to the given time, skipping breaks', () => {
     const acme = entry('acme', 'api', [p('x', 8)]);
     const beta = entry('beta', null, [p('y', 10)]);
     const pause = entry('pause', null, [{ ...p('z', 11), type: 'break' }]);
-    expect(continuingAssignment([acme, beta, pause], new Date('2026-11-08T12:00:00Z'))).toEqual({ projectId: 'beta', taskId: null });
-    expect(continuingAssignment([acme, beta], new Date('2026-11-08T09:00:00Z'))).toEqual({ projectId: 'acme', taskId: 'api' });
+    expect(continuingAssignment([acme, beta, pause], new Date('2026-11-08T12:00:00Z'), '2026-11-08')).toEqual({
+      projectId: 'beta',
+      taskId: null,
+    });
+    expect(continuingAssignment([acme, beta], new Date('2026-11-08T09:00:00Z'), '2026-11-08')).toEqual({
+      projectId: 'acme',
+      taskId: 'api',
+    });
+  });
+
+  it('does not continue an earlier day: a new day starts unassigned', () => {
+    const acme = entry('acme', 'api', [p('x', 8)]);
+    expect(continuingAssignment([acme], new Date('2026-11-09T09:00:00Z'), '2026-11-09')).toEqual({ projectId: null, taskId: null });
   });
 
   it('is unassigned with no previous work period, or an unassigned one', () => {
-    expect(continuingAssignment([], now)).toEqual({ projectId: null, taskId: null });
-    expect(continuingAssignment([unassigned], now)).toEqual({ projectId: null, taskId: null });
+    expect(continuingAssignment([], now, '2026-11-08')).toEqual({ projectId: null, taskId: null });
+    expect(continuingAssignment([unassigned], now, '2026-11-08')).toEqual({ projectId: null, taskId: null });
   });
 });
 

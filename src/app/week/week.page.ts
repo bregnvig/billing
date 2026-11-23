@@ -16,6 +16,7 @@ import {
   weekdayIndex,
 } from '@loopme/model';
 import { TranslatePipe } from '@ngx-translate/core';
+import { CommitsService } from '../data/commits.service';
 import { liveEntries, liveProjects, liveTasks } from '../data/live';
 import { ProjectsService } from '../data/projects.service';
 import { TimeEntriesService } from '../data/time-entries.service';
@@ -44,6 +45,8 @@ export interface PeriodRow extends TimelinePeriod {
   durationMs: number;
   startText: string;
   endText: string | null;
+  /** Assigned by the commit matching (not by you): "Overwrite" may redo it. */
+  fromCommits: boolean;
 }
 
 /** Unrecorded time between periods (locked, asleep, away): can be counted as work. */
@@ -83,6 +86,7 @@ export class WeekPage {
   readonly #entriesService = inject(TimeEntriesService);
   readonly #projectsService = inject(ProjectsService);
   readonly #toasts = inject(ToastService);
+  readonly #commits = inject(CommitsService);
   readonly #locale = inject(LanguageService).locale;
   protected readonly now = injectNow();
   readonly #today = computed(() => toIsoDate(this.now()));
@@ -178,6 +182,7 @@ export class WeekPage {
                 durationMs: (period.end ?? this.now()).getTime() - period.start.getTime(),
                 startText: formatTime(period.start),
                 endText: period.end ? formatTime(period.end) : null,
+                fromCommits: period.assignedBy === 'commits',
               }));
             })
             .sort((a, b) => a.start.getTime() - b.start.getTime());
@@ -215,6 +220,7 @@ export class WeekPage {
             items,
             breakdown: [...byProject.values()].sort((a, b) => b.work - a.work),
             unassignedRefs: rows.filter(r => r.projectId === null && r.type === 'work').map(r => r.ref),
+            fromCommits: rows.some(r => r.fromCommits),
           };
         })
         .map(day => {
@@ -286,6 +292,29 @@ export class WeekPage {
     let name = target.projectId ? (this.#names().projects.get(target.projectId)?.name ?? null) : null;
     if (name && target.taskId) name = `${name} / ${this.#names().tasks.get(target.taskId) ?? ''}`;
     return { target, name };
+  };
+
+  /** The day whose commits are being fetched, if any. */
+  protected readonly fetchingCommits = signal<IsoDate | null>(null);
+  /** "Overwrite": Fetch from commits also redoes what it assigned before (never what you assigned). */
+  protected readonly overwrite = signal(false);
+
+  /** Fetches the day's GitHub commits and assigns its unassigned time by them (Cloud Function). */
+  protected readonly assignFromCommits = async (date: IsoDate): Promise<void> => {
+    if (this.fetchingCommits()) return;
+    this.fetchingCommits.set(date);
+    this.actionError.set(null);
+    try {
+      const result = await this.#commits.assignDay(date, this.overwrite());
+      this.#toasts.show({
+        message: result.commits ? 'weekView.commits.done' : 'weekView.commits.none',
+        params: { commits: result.commits, assigned: result.assigned, left: result.left },
+      });
+    } catch {
+      this.actionError.set('weekView.errors.commits');
+    } finally {
+      this.fetchingCommits.set(null);
+    }
   };
 
   protected readonly onAddPeriod = async (date: IsoDate, period: NewPeriod): Promise<void> => {

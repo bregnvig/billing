@@ -5,9 +5,7 @@ import { addDays, COLLECTIONS, isoDateIn } from '@loopme/model';
 import { padDayEnd } from './day-edges';
 import { entryFromDoc, entryToDoc } from './firestore';
 import { functionOptions } from './options';
-
-/** Used when no hook event has been received yet. */
-const DEFAULT_TIME_ZONE = 'Europe/Copenhagen';
+import { DEFAULT_TIME_ZONE, latestTimeZone } from './time-zone';
 
 /**
  * Nightly, just after midnight: gives the last period of the day that just ended its few extra
@@ -18,8 +16,7 @@ const DEFAULT_TIME_ZONE = 'Europe/Copenhagen';
  */
 export const padDayEnds = onSchedule({ ...functionOptions, schedule: '5 0 * * *', timeZone: DEFAULT_TIME_ZONE }, async () => {
   const db = getFirestore();
-  const latest = await db.collection(COLLECTIONS.hookEvents).orderBy('at', 'desc').limit(1).get();
-  const tz: string = latest.docs[0]?.get('tz') ?? DEFAULT_TIME_ZONE;
+  const tz = await latestTimeZone(db);
   const today = isoDateIn(new Date(), tz);
 
   for (const date of [addDays(today, -2), addDays(today, -1)]) {

@@ -22,6 +22,7 @@ import { formatChange, formatDuration, formatLongDate, formatMonth, formatRange,
 import { LineChart } from '../ui/line-chart';
 import { MetricCard } from '../ui/metric-card';
 import { dayStart, shiftDays } from './dates';
+import { NeedsProjectCard } from './needs-project-card';
 import { TodayCard } from './today-card';
 import { WeekBarDay, WeekBars } from './week-bars';
 
@@ -32,7 +33,7 @@ const greetingKeyFor = (hour: number): string =>
 /** Landing page: today, this week and this month at a glance. */
 @Component({
   selector: 'app-overview-page',
-  imports: [MetricCard, TodayCard, WeekBars, LineChart, TranslatePipe],
+  imports: [MetricCard, TodayCard, NeedsProjectCard, WeekBars, LineChart, TranslatePipe],
   templateUrl: './overview.page.html',
   styleUrl: './overview.page.scss',
 })

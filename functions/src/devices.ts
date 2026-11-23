@@ -1,19 +1,9 @@
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
-import { defineString } from 'firebase-functions/params';
-import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
+import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { COLLECTIONS } from '@loopme/model';
 import { functionOptions } from './options';
+import { assertOwner } from './owner';
 import { hashToken, newDeviceToken, parseDeviceName } from './validate';
-
-/** Set in functions/.env. Keep in sync with firestore.rules and the web app config. */
-const ownerEmail = defineString('OWNER_EMAIL');
-
-const assertOwner = (request: CallableRequest): void => {
-  const token = request.auth?.token;
-  if (!token || token.email?.toLowerCase() !== ownerEmail.value() || token.email_verified !== true) {
-    throw new HttpsError('permission-denied', 'Only the owner can manage devices.');
-  }
-};
 
 /**
  * Registers a device for the OS hook and returns its token. The token is shown once:

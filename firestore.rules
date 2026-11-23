@@ -21,12 +21,19 @@ service cloud.firestore {
     match /timeEntries/{id} {
       allow read, write: if isOwner();
     }
+    // GitHub repo -> project/task, used by assignFromCommits.
+    match /repoRules/{id} {
+      allow read, write: if isOwner();
+    }
 
     // Written only by Cloud Functions (createDevice / revokeDevice / reportEvent).
     match /devices/{id} {
       allow read: if isOwner();
     }
     match /hookEvents/{id} {
+      allow read: if isOwner();
+    }
+    match /commitDays/{id} {
       allow read: if isOwner();
     }
 

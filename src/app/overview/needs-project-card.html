@@ -1,0 +1,58 @@
+<section class="rounded-lg border border-line bg-surface p-6" aria-labelledby="needs-project-title">
+  <h2 id="needs-project-title" class="flex items-center gap-2 text-base font-medium">
+    <span class="material-symbols-outlined text-unassigned" aria-hidden="true">assignment_late</span>
+    {{ 'overview.needsProject.title' | translate }}
+  </h2>
+  <p class="mt-1 text-muted">{{ 'overview.needsProject.hint' | translate }}</p>
+
+  @if (error(); as key) {
+  <p class="mt-3 text-danger" role="alert">{{ key | translate }}</p>
+  }
+
+  <ul class="mt-4 divide-y divide-line border-y border-line">
+    @for (day of days(); track day.date) {
+    <li class="py-3">
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <h3 class="font-medium">{{ day.title }}</h3>
+        <span class="rounded-full border border-unassigned px-2 py-0.5 text-xs tabular-nums">
+          {{ 'overview.unassigned' | translate: { duration: day.total } }}
+        </span>
+        <div class="ml-auto flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="flex h-9 items-center gap-1 rounded-full px-4 text-accent transition-colors duration-150 hover:bg-accent-soft disabled:opacity-60"
+            [disabled]="!!fetching()"
+            [attr.aria-busy]="fetching() === day.date"
+            [title]="'weekView.commits.hint' | translate"
+            (click)="fetch(day.date)">
+            <span class="material-symbols-outlined" aria-hidden="true">commit</span>
+            {{ (fetching() === day.date ? 'weekView.commits.fetching' : 'weekView.commits.fetch') | translate }}
+          </button>
+          <a
+            class="flex h-9 items-center gap-1 rounded-full bg-raised px-4 transition-colors duration-150 hover:bg-line"
+            routerLink="/week"
+            [queryParams]="{ w: day.week, assign: day.date }">
+            <span class="material-symbols-outlined" aria-hidden="true">playlist_add_check</span>
+            {{ 'overview.needsProject.assign' | translate }}
+          </a>
+        </div>
+      </div>
+      <ul class="mt-2 space-y-1">
+        @for (row of day.rows; track row.key) {
+        <li class="flex flex-wrap items-baseline gap-x-3 text-sm">
+          <span class="tabular-nums">{{ row.time }}</span>
+          <span class="text-muted tabular-nums">{{ row.duration }}</span>
+          <span class="text-muted">
+            {{ reasonKey(row.reason) | translate: { repos: reasonRepos(row.reason) } }} @if (row.reason.kind === 'unmapped') {
+            <a routerLink="/projects" class="text-accent underline-offset-2 hover:underline">
+              {{ 'overview.needsProject.mapRepo' | translate }}
+            </a>
+            }
+          </span>
+        </li>
+        }
+      </ul>
+    </li>
+    }
+  </ul>
+</section>

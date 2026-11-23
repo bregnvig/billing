@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { CommitsService } from '../data/commits.service';
 import { DevicesService } from '../settings/devices.service';
 import { ProjectsService } from '../data/projects.service';
 import { TimeEntriesService } from '../data/time-entries.service';
@@ -13,7 +14,7 @@ export const shellRoutes: Routes = [
   {
     path: '',
     component: Shell,
-    providers: [provideFirebaseData(), ProjectsService, TimeEntriesService, DevicesService],
+    providers: [provideFirebaseData(), ProjectsService, TimeEntriesService, DevicesService, CommitsService],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'overview' },
       { path: 'overview', loadComponent: () => import('../overview/overview.page').then(m => m.OverviewPage) },

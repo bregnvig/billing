@@ -68,7 +68,21 @@
     "assignTitle": "Assign today's unassigned time",
     "assignHint": "Assign {{count}} unassigned period(s) from today ({{duration}}) to:",
     "openInWeek": "Open in week view",
-    "unassignedPeriods": "Unassigned periods today"
+    "unassignedPeriods": "Unassigned periods today",
+    "needsProject": {
+      "title": "Needs a project",
+      "hint": "Unassigned time from the last two weeks that your commits haven't decided. Time after a day's last commit waits up to 3 days for your next commit.",
+      "assign": "Assign",
+      "mapRepo": "Map repository",
+      "reason": {
+        "notFetched": "Commits not fetched yet",
+        "waiting": "Waiting for your next commit, which says what this was",
+        "manual": "No commit within 3 days: assign it by hand",
+        "unmapped": "Repository without a project: {{repos}}",
+        "mixed": "Several projects at once: {{repos}}",
+        "pending": "Assigned on the next fetch"
+      }
+    }
   },
   "timeline": {
     "periods": "{{count}} periods",
@@ -157,7 +171,8 @@
       "assign": "Couldn't assign. Check your connection and try again.",
       "undo": "Couldn't undo. Assign the period again by hand.",
       "add": "Couldn't add the period. Check your connection and try again.",
-      "save": "Couldn't save. Check your connection and try again."
+      "save": "Couldn't save. Check your connection and try again.",
+      "commits": "Couldn't read your commits from GitHub. Try again in a moment."
     },
     "addPeriod": "Add period",
     "added": "Period {{start}}–{{end}} added",
@@ -173,7 +188,17 @@
     "deleteAria": "Delete the period {{start}}–{{end}}",
     "deleted": "Period {{start}}–{{end}} deleted",
     "openAll": "Open all days",
-    "closeAll": "Close past days"
+    "closeAll": "Close past days",
+    "commits": {
+      "fetch": "Fetch from commits",
+      "fetching": "Fetching…",
+      "hint": "Assign the day's unassigned time from your GitHub commits",
+      "done": "{{commits}} commits: {{assigned}} assigned, {{left}} left unassigned",
+      "none": "No commits found that day",
+      "tag": "assigned from commits",
+      "overwrite": "Overwrite",
+      "overwriteHint": "Fetch from commits also redoes what it assigned before. Time you assigned yourself is never changed."
+    }
   },
   "picker": {
     "search": "Search projects",
@@ -261,6 +286,23 @@
         "endBeforeStart": "Default end must be after the start."
       },
       "save": "Couldn't save. Check your connection and try again."
+    },
+    "repos": {
+      "title": "GitHub repositories",
+      "hint": "Each night, commits in these repositories assign unassigned time to this project.",
+      "wholeProject": "Whole project",
+      "remove": "Remove {{repo}}",
+      "none": "No repositories.",
+      "repo": "Repository",
+      "placeholder": "owner/name",
+      "task": "Task",
+      "add": "Add repository",
+      "errors": {
+        "required": "Enter a repository, like owner/name.",
+        "format": "Use owner/name or a GitHub link.",
+        "taken": "Already mapped to {{name}}."
+      },
+      "removed": "{{repo}} removed"
     }
   },
   "consent": {
