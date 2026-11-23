@@ -115,6 +115,14 @@ describe('addPeriod / removePeriod / overlapping', () => {
   });
 });
 
+describe('movePeriods: assigning yourself', () => {
+  it('drops the mark from the commit matching', () => {
+    const marked = entry(null, null, [{ ...p('a', 9), assignedBy: 'commits' }]);
+    const { writes } = movePeriods([marked], [{ entryId: marked.id, periodId: 'a' }], { projectId: 'acme', taskId: null }, now);
+    expect(writes[0].periods[0].assignedBy).toBeUndefined();
+  });
+});
+
 describe('continuingAssignment', () => {
   it('continues the most recent work period up to the given time, skipping breaks', () => {
     const acme = entry('acme', 'api', [p('x', 8)]);

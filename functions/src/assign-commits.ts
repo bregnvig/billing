@@ -49,7 +49,15 @@ const loadRules = async (db: Firestore): Promise<Rule[]> =>
  * window (`commitWindowEnd`) or `now`, whichever is first: a later day's first commit claims the
  * time after the day's last commit (model/commits.ts). Returns what it did.
  */
-const assignDay = async (db: Firestore, date: IsoDate, tz: string, commits: readonly Commit[], rules: readonly Rule[], now: Date) => {
+const assignDay = async (
+  db: Firestore,
+  date: IsoDate,
+  tz: string,
+  commits: readonly Commit[],
+  rules: readonly Rule[],
+  now: Date,
+  overwrite: boolean,
+) => {
   const from = startOfDayIn(date, tz);
   const to = new Date(Math.min(now.getTime(), startOfDayIn(commitWindowEnd(date), tz).getTime()));
   const segments = commitSegments(commits, rules, from, to);
@@ -60,6 +68,7 @@ const assignDay = async (db: Firestore, date: IsoDate, tz: string, commits: read
       date,
       segments,
       new Date(),
+      overwrite,
     );
     for (const entry of result.writes) tx.set(db.collection(COLLECTIONS.timeEntries).doc(entry.id), entryToDoc(entry));
     for (const id of result.deletes) tx.delete(db.collection(COLLECTIONS.timeEntries).doc(id));
@@ -88,9 +97,17 @@ const saveCommitDays = async (db: Firestore, days: readonly IsoDate[], tz: strin
 
 /**
  * Fetches the commits from the start of `first` up to the end of `last`'s window (or now), saves
- * them per day and assigns each of the days `first`..`last` by them.
+ * them per day and assigns each of the days `first`..`last` by them. `overwrite` redoes what was
+ * assigned from commits before (never what you assigned yourself); the nightly run never does.
  */
-const assignDays = async (db: Firestore, token: string, first: IsoDate, last: IsoDate, tz: string): Promise<AssignResult> => {
+const assignDays = async (
+  db: Firestore,
+  token: string,
+  first: IsoDate,
+  last: IsoDate,
+  tz: string,
+  overwrite = false,
+): Promise<AssignResult> => {
   const now = new Date();
   const from = startOfDayIn(first, tz);
   const to = new Date(Math.min(now.getTime(), startOfDayIn(commitWindowEnd(last), tz).getTime()));
@@ -100,7 +117,7 @@ const assignDays = async (db: Firestore, token: string, first: IsoDate, last: Is
 
   const result: AssignResult = { commits: 0, assigned: 0, left: 0, failedRepos };
   for (const date of datesBetween(first, last)) {
-    const outcome = await assignDay(db, date, tz, commits, rules, now);
+    const outcome = await assignDay(db, date, tz, commits, rules, now, overwrite);
     result.assigned += outcome.assigned;
     result.left += outcome.left;
   }
@@ -126,14 +143,17 @@ export const assignFromCommitsNightly = onSchedule(
   },
 );
 
-/** The same for one day, on demand ("Fetch from commits" in the week view and on the overview). Owner only. */
+/**
+ * The same for one day, on demand ("Fetch from commits" in the week view and on the overview).
+ * `{ date, tz, overwrite? }`. Owner only.
+ */
 export const assignFromCommits = onCall({ ...functionOptions, secrets: [githubToken] }, async request => {
   assertOwner(request);
-  const { date, tz } = request.data ?? {};
+  const { date, tz, overwrite } = request.data ?? {};
   if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new HttpsError('invalid-argument', 'date must be YYYY-MM-DD.');
   if (typeof tz !== 'string' || !isValidTimeZone(tz)) throw new HttpsError('invalid-argument', 'tz must be an IANA time zone.');
   try {
-    return await assignDays(getFirestore(), githubToken.value(), date as IsoDate, date as IsoDate, tz);
+    return await assignDays(getFirestore(), githubToken.value(), date as IsoDate, date as IsoDate, tz, overwrite === true);
   } catch (error) {
     logger.error('assign from commits failed', { date, error: String(error) });
     throw new HttpsError('unavailable', 'Could not read the commits from GitHub.');

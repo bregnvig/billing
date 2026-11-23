@@ -138,24 +138,68 @@ export interface CommitAssignOutcome extends EntryChanges {
   left: number;
 }
 
+/** A period without the commit matching's mark. */
+const unmarked = ({ assignedBy: _byCommits, ...period }: Period): Period => period;
+
 /**
  * Moves the day's unassigned, finished work periods to the projects the commit segments say,
- * splitting a period where the project changes. The first piece keeps the period's id. Pieces
- * that no conclusive segment covers stay unassigned. Breaks and running periods are left alone.
+ * splitting a period where the project changes. The first piece keeps the period's id, and the
+ * assigned pieces are marked `assignedBy: 'commits'`. Pieces that no conclusive segment covers
+ * stay unassigned. Breaks and running periods are left alone.
+ *
+ * `overwrite`: first put the day's periods marked as assigned from commits back to unassigned
+ * (joining pieces that were split), so they're matched again. Periods you assigned yourself are
+ * never touched.
  */
 export const assignByCommits = (
   entries: readonly TimeEntry[],
   date: IsoDate,
   segments: readonly CommitSegment[],
   now: Date,
+  overwrite = false,
 ): CommitAssignOutcome => {
   const byId = new Map(entries.filter(e => e.date === date).map(e => [e.id, structuredClone(e)]));
   const unassignedId = timeEntryId(date, null, null);
-  const unassigned = byId.get(unassignedId);
   const outcome: CommitAssignOutcome = { writes: [], deletes: [], assigned: 0, left: 0 };
+  const touched = new Set<string>();
+
+  if (overwrite) {
+    const back: Period[] = [];
+    for (const entry of byId.values()) {
+      if (entry.projectId === null) continue;
+      const marked = entry.periods.filter(p => p.assignedBy === 'commits' && p.type === 'work' && p.end !== null);
+      if (!marked.length) continue;
+      entry.periods = entry.periods.filter(p => !marked.includes(p));
+      back.push(...marked.map(unmarked));
+      touched.add(entry.id);
+    }
+    if (back.length) {
+      // Join pieces that touch, so a period split before is matched as one again.
+      const joined: Period[] = [];
+      for (const period of back.sort((a, b) => a.start.getTime() - b.start.getTime())) {
+        const previous = joined.at(-1);
+        if (previous && previous.end!.getTime() === period.start.getTime() && previous.source === period.source) previous.end = period.end;
+        else joined.push(period);
+      }
+      const target = byId.get(unassignedId) ?? {
+        id: unassignedId,
+        date,
+        projectId: null,
+        taskId: null,
+        periods: [],
+        note: null,
+        createdAt: now,
+        updatedAt: now,
+      };
+      target.periods.push(...joined);
+      byId.set(unassignedId, target);
+      touched.add(unassignedId);
+    }
+  }
+
+  const unassigned = byId.get(unassignedId);
   if (!unassigned) return outcome;
 
-  const touched = new Set<string>();
   const entryFor = (assignment: Assignment): TimeEntry => {
     const id = timeEntryId(date, assignment.projectId, assignment.taskId);
     let entry = byId.get(id);
@@ -180,14 +224,14 @@ export const assignByCommits = (
     }
     pieces.forEach((piece, i) => {
       const part: Period = {
-        ...period,
+        ...unmarked(period),
         id: i === 0 ? period.id : `${period.id}-${piece.start.getTime()}`,
         start: piece.start,
         end: piece.end,
       };
       if (piece.assignment) {
         const entry = entryFor(piece.assignment);
-        entry.periods.push(part);
+        entry.periods.push({ ...part, assignedBy: 'commits' });
         touched.add(entry.id);
         outcome.assigned++;
       } else {
@@ -204,7 +248,7 @@ export const assignByCommits = (
     entry.periods.sort((a, b) => a.start.getTime() - b.start.getTime());
     entry.updatedAt = now;
     if (entry.periods.length) outcome.writes.push(entry);
-    else outcome.deletes.push(id);
+    else if (entries.some(e => e.id === id)) outcome.deletes.push(id);
   }
   return outcome;
 };

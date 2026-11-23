@@ -51,6 +51,7 @@ export const periodToFirestore = (p: Period): DocumentData => ({
   end: toTimestamp(p.end),
   type: p.type,
   source: p.source,
+  ...(p.assignedBy && { assignedBy: p.assignedBy }),
 });
 
 const periodFromFirestore = (data: DocumentData): Period => ({
@@ -59,6 +60,7 @@ const periodFromFirestore = (data: DocumentData): Period => ({
   end: toDate(data['end']),
   type: data['type'] ?? 'work',
   source: data['source'],
+  ...(data['assignedBy'] === 'commits' && { assignedBy: 'commits' as const }),
 });
 
 export const timeEntryConverter: FirestoreDataConverter<TimeEntry> = {

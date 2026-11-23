@@ -21,10 +21,14 @@ export class CommitsService {
   readonly #db = inject(FIRESTORE);
   readonly #functions = inject(FIREBASE_FUNCTIONS);
 
-  /** Fetches the day's commits and assigns its unassigned time by them. */
-  readonly assignDay = async (date: IsoDate): Promise<AssignDayResult> => {
+  /**
+   * Fetches the day's commits and assigns its unassigned time by them. `overwrite` first puts back
+   * what was assigned from commits before, so it's matched again (never what you assigned yourself).
+   */
+  readonly assignDay = async (date: IsoDate, overwrite = false): Promise<AssignDayResult> => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    return (await httpsCallable<{ date: IsoDate; tz: string }, AssignDayResult>(this.#functions, 'assignFromCommits')({ date, tz })).data;
+    const call = httpsCallable<{ date: IsoDate; tz: string; overwrite: boolean }, AssignDayResult>(this.#functions, 'assignFromCommits');
+    return (await call({ date, tz, overwrite })).data;
   };
 
   /** Maps a repo (`owner/name`, already normalized) to a project/task. */

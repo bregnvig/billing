@@ -188,6 +188,48 @@ describe('assignByCommits', () => {
   });
 });
 
+describe('assignByCommits: marks and overwrite', () => {
+  const day = (commits: Commit[]) => commitSegments(commits, rules, dayStart, windowEnd);
+  const entryOn = (projectId: string | null, taskId: string | null, periods: Period[]) => entry(projectId, taskId, periods);
+
+  it('marks what it assigns, and not what stays unassigned', () => {
+    const outcome = assignByCommits([entryOn(null, null, [p('a', '09:00', '17:00')])], '2026-11-20', day([c('acme/api', '13:00')]), now);
+    const byId = new Map(outcome.writes.map(e => [e.id, e]));
+    expect(byId.get('2026-11-20_acme_api')!.periods[0].assignedBy).toBe('commits');
+    expect(byId.get('2026-11-20__')!.periods[0].assignedBy).toBeUndefined();
+  });
+
+  it('without overwrite, leaves time assigned from commits alone', () => {
+    const before = entryOn('acme', 'api', [{ ...p('a', '09:00', '13:00'), assignedBy: 'commits' }]);
+    expect(assignByCommits([before], '2026-11-20', day([c('beta/app', '13:00')]), now).writes).toEqual([]);
+  });
+
+  it('with overwrite, redoes time assigned from commits (joining split pieces) by the current rules', () => {
+    const x = entryOn('acme', 'api', [{ ...p('a', '09:00', '13:00'), assignedBy: 'commits' }]);
+    const y = entryOn('beta', null, [{ ...p('a-1', '13:00', '17:00'), assignedBy: 'commits' }]);
+    // Now everything up to 17:00 is on beta (a later commit, or a fixed rule).
+    const outcome = assignByCommits([x, y], '2026-11-20', day([c('beta/app', '17:00')]), now, true);
+    const byId = new Map(outcome.writes.map(e => [e.id, e]));
+    expect(spans(byId.get('2026-11-20_beta_'))).toEqual(['09:00-17:00']);
+    expect(byId.get('2026-11-20_beta_')!.periods[0]).toMatchObject({ id: 'a', assignedBy: 'commits' });
+    expect(outcome.deletes).toEqual(['2026-11-20_acme_api']);
+  });
+
+  it('with overwrite, never touches what you assigned yourself', () => {
+    const mine = entryOn('acme', 'api', [p('m', '09:00', '13:00')]);
+    expect(assignByCommits([mine], '2026-11-20', day([c('beta/app', '17:00')]), now, true).writes).toEqual([]);
+  });
+
+  it('with overwrite, puts back what the commits no longer decide', () => {
+    const x = entryOn('acme', 'api', [{ ...p('a', '09:00', '13:00'), assignedBy: 'commits' }]);
+    const outcome = assignByCommits([x], '2026-11-20', [], now, true);
+    const byId = new Map(outcome.writes.map(e => [e.id, e]));
+    expect(spans(byId.get('2026-11-20__'))).toEqual(['09:00-13:00']);
+    expect(byId.get('2026-11-20__')!.periods[0].assignedBy).toBeUndefined();
+    expect(outcome.deletes).toEqual(['2026-11-20_acme_api']);
+  });
+});
+
 describe('whyUnassigned', () => {
   const period = { start: at('09:00'), end: at('11:00') };
   const why = (commits: Commit[] | null, retrying = true) => whyUnassigned(period, commits, rules, dayStart, windowEnd, retrying);

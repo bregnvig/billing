@@ -194,7 +194,10 @@
       "fetching": "Henter…",
       "hint": "Tildel dagens ikke-tildelte tid ud fra dine GitHub-commits",
       "done": "{{commits}} commits: {{assigned}} tildelt, {{left}} stadig ikke tildelt",
-      "none": "Ingen commits fundet den dag"
+      "none": "Ingen commits fundet den dag",
+      "tag": "tildelt fra commits",
+      "overwrite": "Overskriv",
+      "overwriteHint": "Hent fra commits laver også det om, den har tildelt før. Tid, du selv har tildelt, ændres aldrig."
     }
   },
   "picker": {

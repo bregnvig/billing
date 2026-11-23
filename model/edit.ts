@@ -37,7 +37,7 @@ export const entryIdsForMove = (refs: readonly PeriodRef[], target: Assignment):
 
 /**
  * Moves periods to the entry for `target` on the same day. Each period keeps its id, times,
- * type and source. Source entries left empty are deleted; target entries are created as needed.
+ * type and source; a mark from the commit matching is dropped (it's now your choice). Source entries left empty are deleted; target entries are created as needed.
  * Periods already in the target entry, or not found, are skipped.
  */
 export const movePeriods = (entries: readonly TimeEntry[], refs: readonly PeriodRef[], target: Assignment, now: Date): EntryChanges => {
@@ -59,7 +59,7 @@ export const movePeriods = (entries: readonly TimeEntry[], refs: readonly Period
       byId.set(targetId, destination);
     }
 
-    const [period] = source.periods.splice(index, 1);
+    const [{ assignedBy: _byCommits, ...period }] = source.periods.splice(index, 1);
     destination.periods.push(period);
     destination.periods.sort(byStart);
     source.updatedAt = now;

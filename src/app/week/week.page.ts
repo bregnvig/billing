@@ -45,6 +45,8 @@ export interface PeriodRow extends TimelinePeriod {
   durationMs: number;
   startText: string;
   endText: string | null;
+  /** Assigned by the commit matching (not by you): "Overwrite" may redo it. */
+  fromCommits: boolean;
 }
 
 /** Unrecorded time between periods (locked, asleep, away): can be counted as work. */
@@ -180,6 +182,7 @@ export class WeekPage {
                 durationMs: (period.end ?? this.now()).getTime() - period.start.getTime(),
                 startText: formatTime(period.start),
                 endText: period.end ? formatTime(period.end) : null,
+                fromCommits: period.assignedBy === 'commits',
               }));
             })
             .sort((a, b) => a.start.getTime() - b.start.getTime());
@@ -217,6 +220,7 @@ export class WeekPage {
             items,
             breakdown: [...byProject.values()].sort((a, b) => b.work - a.work),
             unassignedRefs: rows.filter(r => r.projectId === null && r.type === 'work').map(r => r.ref),
+            fromCommits: rows.some(r => r.fromCommits),
           };
         })
         .map(day => {
@@ -292,6 +296,8 @@ export class WeekPage {
 
   /** The day whose commits are being fetched, if any. */
   protected readonly fetchingCommits = signal<IsoDate | null>(null);
+  /** "Overwrite": Fetch from commits also redoes what it assigned before (never what you assigned). */
+  protected readonly overwrite = signal(false);
 
   /** Fetches the day's GitHub commits and assigns its unassigned time by them (Cloud Function). */
   protected readonly assignFromCommits = async (date: IsoDate): Promise<void> => {
@@ -299,7 +305,7 @@ export class WeekPage {
     this.fetchingCommits.set(date);
     this.actionError.set(null);
     try {
-      const result = await this.#commits.assignDay(date);
+      const result = await this.#commits.assignDay(date, this.overwrite());
       this.#toasts.show({
         message: result.commits ? 'weekView.commits.done' : 'weekView.commits.none',
         params: { commits: result.commits, assigned: result.assigned, left: result.left },

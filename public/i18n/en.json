@@ -194,7 +194,10 @@
       "fetching": "Fetching…",
       "hint": "Assign the day's unassigned time from your GitHub commits",
       "done": "{{commits}} commits: {{assigned}} assigned, {{left}} left unassigned",
-      "none": "No commits found that day"
+      "none": "No commits found that day",
+      "tag": "assigned from commits",
+      "overwrite": "Overwrite",
+      "overwriteHint": "Fetch from commits also redoes what it assigned before. Time you assigned yourself is never changed."
     }
   },
   "picker": {
