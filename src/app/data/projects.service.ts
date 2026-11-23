@@ -8,7 +8,7 @@ import { projectsCollection, tasksCollection } from './collections';
 export type ProjectPatch = Partial<Pick<Project, 'name' | 'color' | 'archived'>>;
 export type TaskPatch = Partial<Pick<Task, 'name' | 'defaultHours' | 'archived'>>;
 
-/** Writes to projects and tasks. Read them with `liveProjects()` / `liveTasks()`.
+/** Writes to projects and tasks. Read them from `LiveCatalog`.
  * Provided on the lazy shell route (it needs FIRESTORE, which only exists there).
  */
 @Injectable()

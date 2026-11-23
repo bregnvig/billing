@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
+import { FIRESTORE } from '../firebase/firebase-data.providers';
 import { provideTestTranslations, useEnglish } from '../testing/translations';
 import { Shell } from './shell';
 
@@ -12,6 +13,7 @@ describe('Shell', () => {
       providers: [
         provideRouter(['overview', 'week', 'projects', 'settings'].map(path => ({ path, children: [] }))),
         provideTestTranslations(),
+        { provide: FIRESTORE, useValue: {} },
         {
           provide: AuthService,
           useValue: { user: signal({ email: 'flemming@loopme.dk' }), signOut: async () => {} },

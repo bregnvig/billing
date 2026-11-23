@@ -1,5 +1,13 @@
 import { EnvironmentProviders, inject, InjectionToken, makeEnvironmentProviders } from '@angular/core';
-import { connectFirestoreEmulator, Firestore, getFirestore } from 'firebase/firestore';
+import {
+  clearIndexedDbPersistence,
+  connectFirestoreEmulator,
+  Firestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  terminate,
+} from 'firebase/firestore';
 import { connectFunctionsEmulator, Functions, getFunctions } from 'firebase/functions';
 import { emulators, functionsRegion } from './firebase.config';
 import { FIREBASE_APP } from './firebase.providers';
@@ -7,8 +15,8 @@ import { FIREBASE_APP } from './firebase.providers';
 export const FIRESTORE = new InjectionToken<Firestore>('FIRESTORE');
 export const FIREBASE_FUNCTIONS = new InjectionToken<Functions>('FIREBASE_FUNCTIONS');
 
-/** Emulators may only be connected once per instance, even if the route injector is re-created. */
-let firestoreConnected = false;
+/** One Firestore instance per page load: it may only be initialized (and connected to the emulator) once. */
+let firestoreInstance: Firestore | null = null;
 let functionsConnected = false;
 
 /**
@@ -20,12 +28,14 @@ export const provideFirebaseData = (): EnvironmentProviders =>
     {
       provide: FIRESTORE,
       useFactory: (): Firestore => {
-        const firestore = getFirestore(inject(FIREBASE_APP));
-        if (emulators && !firestoreConnected) {
-          connectFirestoreEmulator(firestore, emulators.host, emulators.firestore);
-          firestoreConnected = true;
-        }
-        return firestore;
+        if (firestoreInstance) return firestoreInstance;
+        // Cache in IndexedDB, shared by all tabs: a reload or a revisit fetches only what changed
+        // instead of reading every document again (and the app works offline). Cleared on sign-out.
+        const firestore = initializeFirestore(inject(FIREBASE_APP), {
+          localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+        });
+        if (emulators) connectFirestoreEmulator(firestore, emulators.host, emulators.firestore);
+        return (firestoreInstance = firestore);
       },
     },
     {
@@ -40,3 +50,12 @@ export const provideFirebaseData = (): EnvironmentProviders =>
       },
     },
   ]);
+
+/**
+ * Deletes the local Firestore cache, so no data stays in the browser after signing out. Stops the
+ * Firestore instance: reload the page afterwards.
+ */
+export const clearLocalData = async (firestore: Firestore): Promise<void> => {
+  await terminate(firestore);
+  await clearIndexedDbPersistence(firestore);
+};

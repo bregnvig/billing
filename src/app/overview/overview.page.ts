@@ -15,7 +15,8 @@ import {
 } from '@loopme/model';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../auth/auth.service';
-import { liveEntries, liveProjects, liveTasks } from '../data/live';
+import { LiveCatalog } from '../data/live-catalog';
+import { liveEntries } from '../data/live';
 import { LanguageService } from '../i18n/language.service';
 import { injectNow } from '../ui/clock';
 import { formatChange, formatDuration, formatLongDate, formatMonth, formatRange, formatWeekdayShort } from '../ui/format';
@@ -47,10 +48,9 @@ export class OverviewPage {
     equal: (a, b) => a.from === b.from && a.to === b.to,
   });
   readonly #entries = liveEntries(this.#range);
-  readonly #projects = liveProjects();
-  readonly #tasks = liveTasks();
+  readonly #catalog = inject(LiveCatalog);
 
-  protected readonly error = computed(() => this.#entries.error() ?? this.#projects.error());
+  protected readonly error = computed(() => this.#entries.error() ?? this.#catalog.error());
   protected readonly loaded = computed(() => this.#entries.value() !== null);
   /** Skeletons only after 200ms, so fast loads don't flash (ui-design states). */
   protected readonly showSkeleton = signal(false);
@@ -60,8 +60,8 @@ export class OverviewPage {
   }
 
   protected readonly list = computed(() => this.#entries.value() ?? []);
-  protected readonly projectList = computed(() => this.#projects.value() ?? []);
-  protected readonly taskList = computed(() => this.#tasks.value() ?? []);
+  protected readonly projectList = this.#catalog.projects;
+  protected readonly taskList = this.#catalog.tasks;
   readonly #totals = computed(() => dailyTotals(this.list(), this.now()));
 
   // --- Greeting -------------------------------------------------------------------------
