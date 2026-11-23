@@ -4,12 +4,15 @@
  *
  * A commit says what you were working on *up to* that moment, so it claims the time since the
  * previous commit (the first one claims from the start of the day). Time after the day's last
- * commit goes to that commit's project too. Commits less than `COMMIT_CLUSTER_MS` apart form one
- * group; a group that touches several projects, or a repo without a rule, is inconclusive and its
- * time stays unassigned.
+ * commit is claimed by the *next* commit, even on a later day (Tuesday's first commit says what
+ * you did Monday afternoon), looking at most `COMMIT_LOOKAHEAD_DAYS` days ahead. Until such a
+ * commit exists that time stays unassigned; after that it's left to you. Commits less than
+ * `COMMIT_CLUSTER_MS` apart form one group; a group that touches several projects, or a repo
+ * without a rule, is inconclusive and its time stays unassigned.
  */
 import { Assignment, EntryChanges } from './edit';
 import { IsoDate, Period, TimeEntry, timeEntryId } from './entities';
+import { addDays } from './time';
 
 /** One of your commits, by the time it was written (the author date). */
 export interface Commit {
@@ -40,6 +43,19 @@ export interface RepoRule {
 
 /** Commits closer together than this are one group. */
 export const COMMIT_CLUSTER_MS = 15 * 60_000;
+
+/**
+ * How many days after a day its commits are looked for: the next commit may be days later (a
+ * weekend). The nightly run retries a day until it has seen these days' commits; Friday's
+ * afternoon can still be decided by Monday's first commit.
+ */
+export const COMMIT_LOOKAHEAD_DAYS = 3;
+
+/** The day after the last day whose commits count for `date` (end of the window, exclusive). */
+export const commitWindowEnd = (date: IsoDate): IsoDate => addDays(date, 1 + COMMIT_LOOKAHEAD_DAYS);
+
+/** Whether the nightly run still tries `date` again (on `today`, or later). */
+export const stillRetried = (date: IsoDate, today: IsoDate): boolean => today <= commitWindowEnd(date);
 
 /** `Owner/Name`, a GitHub URL or `owner/name.git` → `owner/name`. `null` when it isn't one. */
 export const normalizeRepo = (input: string): string | null => {
@@ -74,16 +90,17 @@ const sameAssignment = (a: Assignment | null, b: Assignment | null) => !!a && !!
 const sameOutcome = (a: Assignment | null, b: Assignment | null) => (!a && !b) || sameAssignment(a, b);
 
 /**
- * Splits [dayStart, dayEnd) into stretches by commit (see the file comment). No commits that day
+ * Splits [from, to) into stretches by commit (see the file comment): from `from` (the start of
+ * the day) up to the last commit before `to`. The time after that commit isn't covered. No commits
  * gives no stretches. Neighbouring stretches with the same outcome are merged.
  */
 export const commitSegments = (
   commits: readonly Commit[],
   rules: readonly Pick<RepoRule, 'repo' | 'projectId' | 'taskId'>[],
-  dayStart: Date,
-  dayEnd: Date,
+  from: Date,
+  to: Date,
 ): CommitSegment[] => {
-  const sorted = commits.filter(c => c.at >= dayStart && c.at < dayEnd).sort((a, b) => a.at.getTime() - b.at.getTime());
+  const sorted = commits.filter(c => c.at >= from && c.at < to).sort((a, b) => a.at.getTime() - b.at.getTime());
 
   const groups: Commit[][] = [];
   for (const commit of sorted) {
@@ -102,17 +119,15 @@ export const commitSegments = (
     } else segments.push(segment);
   };
 
-  let from = dayStart;
+  let start = from;
   for (const group of groups) {
     const repos = [...new Set(group.map(c => c.repo))];
     const assignments = repos.map(repo => ruleFor(rules, repo));
     const assignment = assignments.every(a => sameAssignment(a, assignments[0])) ? assignments[0] : null;
-    const to = group.at(-1)!.at;
-    push({ start: from, end: to, assignment, repos });
-    from = to;
+    const end = group.at(-1)!.at;
+    push({ start, end, assignment, repos });
+    start = end;
   }
-  const last = segments.at(-1);
-  if (last) push({ start: from, end: dayEnd, assignment: last.assignment, repos: [...last.repos] });
   return segments;
 };
 
@@ -218,8 +233,10 @@ const piecesOf = (period: Period, segments: readonly CommitSegment[]) => {
 export type UnassignedReason =
   /** The day's commits haven't been fetched yet (the nightly run hasn't happened, or failed). */
   | { kind: 'notFetched' }
-  /** No commits that day. */
-  | { kind: 'noCommits' }
+  /** After the last commit so far: the next commit decides it, and the nightly run still retries the day. */
+  | { kind: 'waiting' }
+  /** No commit claims it within `COMMIT_LOOKAHEAD_DAYS` days: assign it by hand. */
+  | { kind: 'manual' }
   /** Commits in repos without a rule. */
   | { kind: 'unmapped'; repos: string[] }
   /** Commits for several projects within 15 minutes of each other. */
@@ -227,20 +244,28 @@ export type UnassignedReason =
   /** The commits decide it: it'll be assigned on the next run (e.g. the period was still running). */
   | { kind: 'pending' };
 
-/** Explains a finished unassigned period of a day, from that day's fetched commits (`null` = not fetched). */
+/**
+ * Explains a finished unassigned period from the commits of its day and the days after it, up to
+ * the end of its window (`commitWindowEnd`). `commits` is `null` when the day's commits haven't
+ * been fetched. `retrying`: the nightly run still tries the day (`stillRetried`).
+ */
 export const whyUnassigned = (
   period: { start: Date; end: Date },
   commits: readonly Commit[] | null,
   rules: readonly Pick<RepoRule, 'repo' | 'projectId' | 'taskId'>[],
-  dayStart: Date,
-  dayEnd: Date,
+  from: Date,
+  to: Date,
+  retrying: boolean,
 ): UnassignedReason => {
   if (!commits) return { kind: 'notFetched' };
-  const overlapping = commitSegments(commits, rules, dayStart, dayEnd).filter(s => s.start < period.end && s.end > period.start);
-  if (!overlapping.length) return { kind: 'noCommits' };
-  const inconclusive = overlapping.filter(s => !s.assignment);
-  if (!inconclusive.length) return { kind: 'pending' };
-  const repos = [...new Set(inconclusive.flatMap(s => s.repos))].sort();
-  const unmapped = repos.filter(repo => !ruleFor(rules, repo));
-  return unmapped.length ? { kind: 'unmapped', repos: unmapped } : { kind: 'mixed', repos };
+  const segments = commitSegments(commits, rules, from, to);
+  const inconclusive = segments.filter(s => !s.assignment && s.start < period.end && s.end > period.start);
+  if (inconclusive.length) {
+    const repos = [...new Set(inconclusive.flatMap(s => s.repos))].sort();
+    const unmapped = repos.filter(repo => !ruleFor(rules, repo));
+    return unmapped.length ? { kind: 'unmapped', repos: unmapped } : { kind: 'mixed', repos };
+  }
+  const covered = segments.at(-1)?.end ?? from;
+  if (period.end > covered) return { kind: retrying ? 'waiting' : 'manual' };
+  return { kind: 'pending' };
 };

@@ -71,12 +71,13 @@
     "unassignedPeriods": "Unassigned periods today",
     "needsProject": {
       "title": "Needs a project",
-      "hint": "Unassigned time from the last two weeks that your commits couldn't decide.",
+      "hint": "Unassigned time from the last two weeks that your commits haven't decided. Time after a day's last commit waits up to 3 days for your next commit.",
       "assign": "Assign",
       "mapRepo": "Map repository",
       "reason": {
         "notFetched": "Commits not fetched yet",
-        "noCommits": "No commits",
+        "waiting": "Waiting for your next commit, which says what this was",
+        "manual": "No commit within 3 days: assign it by hand",
         "unmapped": "Repository without a project: {{repos}}",
         "mixed": "Several projects at once: {{repos}}",
         "pending": "Assigned on the next fetch"

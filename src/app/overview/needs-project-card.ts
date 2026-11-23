@@ -1,6 +1,17 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { addDays, IsoDate, startOfWeek, TimeEntry, toIsoDate, UnassignedReason, whyUnassigned } from '@loopme/model';
+import {
+  addDays,
+  commitWindowEnd,
+  datesBetween,
+  IsoDate,
+  startOfWeek,
+  stillRetried,
+  TimeEntry,
+  toIsoDate,
+  UnassignedReason,
+  whyUnassigned,
+} from '@loopme/model';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CommitsService } from '../data/commits.service';
 import { liveCommitDays, liveRepoRules } from '../data/live';
@@ -35,15 +46,16 @@ export class NeedsProjectCard {
   readonly #range = computed(
     () => {
       const today = toIsoDate(this.now());
-      return { from: addDays(today, -NEEDS_PROJECT_DAYS), to: addDays(today, -1) };
+      return { from: addDays(today, -NEEDS_PROJECT_DAYS), to: addDays(today, -1), today };
     },
-    { equal: (a, b) => a.from === b.from && a.to === b.to },
+    { equal: (a, b) => a.today === b.today },
   );
-  readonly #commitDays = liveCommitDays(this.#range);
+  /** Up to today: a later day's commits decide the end of an earlier one. */
+  readonly #commitDays = liveCommitDays(computed(() => ({ from: this.#range().from, to: this.#range().today })));
   readonly #rules = liveRepoRules();
 
   protected readonly days = computed(() => {
-    const { from, to } = this.#range();
+    const { from, to, today } = this.#range();
     const commitDays = new Map((this.#commitDays.value() ?? []).map(d => [d.id, d.commits]));
     const rules = this.#rules.value() ?? [];
     const byDay = new Map<IsoDate, { start: Date; end: Date }[]>();
@@ -56,14 +68,18 @@ export class NeedsProjectCard {
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([date, periods]) => {
         const start = dayStart(date);
-        const end = dayStart(addDays(date, 1));
+        // The day's commits and those of the days after it that are fetched (model/commits.ts).
+        const own = commitDays.get(date);
+        const commits = own ? datesBetween(date, addDays(commitWindowEnd(date), -1)).flatMap(d => commitDays.get(d) ?? []) : null;
+        const windowEnd = dayStart(commitWindowEnd(date));
+        const retrying = stillRetried(date, today);
         const rows = periods
           .sort((a, b) => a.start.getTime() - b.start.getTime())
           .map(p => ({
             key: p.start.getTime(),
             time: `${formatTime(p.start)}–${formatTime(p.end)}`,
             duration: formatDuration(p.end.getTime() - p.start.getTime()),
-            reason: whyUnassigned(p, commitDays.get(date) ?? null, rules, start, end),
+            reason: whyUnassigned(p, commits, rules, start, windowEnd, retrying),
           }));
         return {
           date,
