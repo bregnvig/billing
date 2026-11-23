@@ -194,12 +194,15 @@
       "none": "No commits found that day",
       "tag": "assigned from commits",
       "overwrite": "Overwrite",
-      "overwriteHint": "Sync also redoes what the commits assigned before. Time you assigned yourself is never changed.",
+      "overwriteHint": "Sync redoes the whole day from the commits, including periods you moved to a project yourself. Periods you typed in by hand are kept.",
       "sync": "Sync",
       "syncing": "Syncing…",
       "syncHint": "Assign the day's unassigned time from your GitHub commits",
-      "syncOverwriteHint": "Redo the day from your GitHub commits, including what they assigned before",
-      "group": "Sync from GitHub commits"
+      "syncOverwriteHint": "Redo the whole day from your GitHub commits (periods you typed in by hand are kept)",
+      "group": "Sync from GitHub commits",
+      "nothing": "No finished time to assign that day",
+      "allAssigned": "All of that day's time is already on a project. Turn on Overwrite to redo it from the commits.",
+      "allTyped": "Only periods you typed in by hand are left. Those are never overwritten."
     }
   },
   "picker": {

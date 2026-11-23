@@ -13,7 +13,7 @@ import {
   whyUnassigned,
 } from '@loopme/model';
 import { TranslatePipe } from '@ngx-translate/core';
-import { CommitsService } from '../data/commits.service';
+import { CommitsService, syncToast } from '../data/commits.service';
 import { liveCommitDays, liveRepoRules } from '../data/live';
 import { LanguageService } from '../i18n/language.service';
 import { formatDay, formatDuration, formatTime } from '../ui/format';
@@ -105,10 +105,7 @@ export class NeedsProjectCard {
     this.error.set(null);
     try {
       const result = await this.#commits.assignDay(date);
-      this.#toasts.show({
-        message: result.commits ? 'weekView.commits.done' : 'weekView.commits.none',
-        params: { commits: result.commits, assigned: result.assigned, left: result.left },
-      });
+      this.#toasts.show(syncToast(result, false));
     } catch {
       this.error.set('weekView.errors.commits');
     } finally {

@@ -3,6 +3,7 @@ import { Assignment, IsoDate, RepoRule } from '@loopme/model';
 import { addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { FIREBASE_FUNCTIONS, FIRESTORE } from '../firebase/firebase-data.providers';
+import { Toast } from '../ui/toast.service';
 import { repoRulesCollection } from './collections';
 
 /** What `assignFromCommits` did (functions/src/assign-commits.ts). */
@@ -10,8 +11,19 @@ export interface AssignDayResult {
   commits: number;
   assigned: number;
   left: number;
+  /** Finished work periods already on a project that were left as they are. */
+  kept: number;
   failedRepos: string[];
 }
+
+/** The toast after a Sync: what it did, or why it did nothing. */
+export const syncToast = (result: AssignDayResult, overwrite: boolean): Toast => {
+  const params = { commits: result.commits, assigned: result.assigned, left: result.left, kept: result.kept };
+  if (!result.commits) return { message: 'weekView.commits.none', params };
+  if (result.assigned || result.left) return { message: 'weekView.commits.done', params };
+  if (!result.kept) return { message: 'weekView.commits.nothing', params };
+  return { message: overwrite ? 'weekView.commits.allTyped' : 'weekView.commits.allAssigned', params };
+};
 
 /** Assigning time from GitHub commits: the repo → project/task rules, and running the matching for a day.
  * Provided on the lazy shell route (it needs FIRESTORE and FIREBASE_FUNCTIONS, which only exist there).

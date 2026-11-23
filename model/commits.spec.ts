@@ -177,9 +177,15 @@ describe('assignByCommits', () => {
   it('leaves breaks, running periods and days without commits alone', () => {
     const segments = day([c('acme/api', '18:00')]);
     const breakAndRunning = entry(null, null, [p('b', '12:00', '12:30', 'break'), p('r', '16:00', null)]);
-    expect(assignByCommits([breakAndRunning], '2026-11-20', segments, now)).toEqual({ writes: [], deletes: [], assigned: 0, left: 0 });
+    expect(assignByCommits([breakAndRunning], '2026-11-20', segments, now)).toEqual({
+      writes: [],
+      deletes: [],
+      assigned: 0,
+      left: 0,
+      kept: 0,
+    });
     const outcome = assignByCommits([entry(null, null, [p('a', '09:00', '10:00')])], '2026-11-20', [], now);
-    expect(outcome).toEqual({ writes: [], deletes: [], assigned: 0, left: 1 });
+    expect(outcome).toEqual({ writes: [], deletes: [], assigned: 0, left: 1, kept: 0 });
   });
 
   it('does nothing without an unassigned entry', () => {
@@ -215,9 +221,24 @@ describe('assignByCommits: marks and overwrite', () => {
     expect(outcome.deletes).toEqual(['2026-11-20_acme_api']);
   });
 
-  it('with overwrite, never touches what you assigned yourself', () => {
-    const mine = entryOn('acme', 'api', [p('m', '09:00', '13:00')]);
-    expect(assignByCommits([mine], '2026-11-20', day([c('beta/app', '17:00')]), now, true).writes).toEqual([]);
+  it('without overwrite, counts what it left alone', () => {
+    const guessed = entryOn('acme', 'api', [p('h', '09:00', '13:00')]);
+    expect(assignByCommits([guessed], '2026-11-20', day([c('beta/app', '13:00')]), now)).toMatchObject({ assigned: 0, left: 0, kept: 1 });
+  });
+
+  it("with overwrite, redoes the hook's periods on a project too (e.g. carried over from the day before)", () => {
+    const guessed = entryOn('acme', 'api', [p('h', '09:00', '13:00')]);
+    const outcome = assignByCommits([guessed], '2026-11-20', day([c('beta/app', '13:00')]), now, true);
+    const byId = new Map(outcome.writes.map(e => [e.id, e]));
+    expect(spans(byId.get('2026-11-20_beta_'))).toEqual(['09:00-13:00']);
+    expect(outcome.deletes).toEqual(['2026-11-20_acme_api']);
+    expect(outcome).toMatchObject({ assigned: 1, kept: 0 });
+  });
+
+  it('with overwrite, never touches periods you typed in by hand', () => {
+    const typed = entryOn('acme', 'api', [{ ...p('m', '09:00', '13:00'), source: 'manual' }]);
+    const outcome = assignByCommits([typed], '2026-11-20', day([c('beta/app', '17:00')]), now, true);
+    expect(outcome).toMatchObject({ writes: [], assigned: 0, kept: 1 });
   });
 
   it('with overwrite, puts back what the commits no longer decide', () => {

@@ -136,7 +136,13 @@ export interface CommitAssignOutcome extends EntryChanges {
   assigned: number;
   /** Pieces left unassigned (inconclusive or no commits). */
   left: number;
+  /** Finished work periods already on a project that were left as they are. */
+  kept: number;
 }
+
+/** Whether `overwrite` may redo a period: what the hook recorded or the commits assigned, not what you typed in. */
+const redoable = (period: Period) =>
+  period.type === 'work' && period.end !== null && (period.source === 'hook' || period.assignedBy === 'commits');
 
 /** A period without the commit matching's mark. */
 const unmarked = ({ assignedBy: _byCommits, ...period }: Period): Period => period;
@@ -147,9 +153,10 @@ const unmarked = ({ assignedBy: _byCommits, ...period }: Period): Period => peri
  * assigned pieces are marked `assignedBy: 'commits'`. Pieces that no conclusive segment covers
  * stay unassigned. Breaks and running periods are left alone.
  *
- * `overwrite`: first put the day's periods marked as assigned from commits back to unassigned
- * (joining pieces that were split), so they're matched again. Periods you assigned yourself are
- * never touched.
+ * `overwrite`: first put the day's assigned periods recorded by the hook, or assigned from commits,
+ * back to unassigned (joining pieces that touch), so the whole day is matched again. That includes
+ * hook periods you moved yourself: older days can't tell those from the hook's guesses. Periods
+ * you typed in by hand are kept.
  */
 export const assignByCommits = (
   entries: readonly TimeEntry[],
@@ -160,14 +167,14 @@ export const assignByCommits = (
 ): CommitAssignOutcome => {
   const byId = new Map(entries.filter(e => e.date === date).map(e => [e.id, structuredClone(e)]));
   const unassignedId = timeEntryId(date, null, null);
-  const outcome: CommitAssignOutcome = { writes: [], deletes: [], assigned: 0, left: 0 };
+  const outcome: CommitAssignOutcome = { writes: [], deletes: [], assigned: 0, left: 0, kept: 0 };
   const touched = new Set<string>();
 
   if (overwrite) {
     const back: Period[] = [];
     for (const entry of byId.values()) {
       if (entry.projectId === null) continue;
-      const marked = entry.periods.filter(p => p.assignedBy === 'commits' && p.type === 'work' && p.end !== null);
+      const marked = entry.periods.filter(redoable);
       if (!marked.length) continue;
       entry.periods = entry.periods.filter(p => !marked.includes(p));
       back.push(...marked.map(unmarked));
@@ -196,6 +203,10 @@ export const assignByCommits = (
       touched.add(unassignedId);
     }
   }
+
+  outcome.kept = [...byId.values()]
+    .filter(e => e.projectId !== null)
+    .reduce((n, e) => n + e.periods.filter(p => p.type === 'work' && p.end !== null).length, 0);
 
   const unassigned = byId.get(unassignedId);
   if (!unassigned) return outcome;

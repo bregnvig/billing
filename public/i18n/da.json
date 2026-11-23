@@ -194,12 +194,15 @@
       "none": "Ingen commits fundet den dag",
       "tag": "tildelt fra commits",
       "overwrite": "Overskriv",
-      "overwriteHint": "Synkroniser laver også det om, som commits har tildelt før. Tid, du selv har tildelt, ændres aldrig.",
+      "overwriteHint": "Synkroniser laver hele dagen om ud fra dine commits, også perioder, du selv har flyttet til et projekt. Perioder, du selv har skrevet ind, beholdes.",
       "sync": "Synkroniser",
       "syncing": "Synkroniserer…",
       "syncHint": "Tildel dagens ikke-tildelte tid ud fra dine GitHub-commits",
-      "syncOverwriteHint": "Lav dagen om ud fra dine GitHub-commits, også det, de har tildelt før",
-      "group": "Synkroniser fra GitHub-commits"
+      "syncOverwriteHint": "Lav hele dagen om ud fra dine GitHub-commits (perioder, du selv har skrevet ind, beholdes)",
+      "group": "Synkroniser fra GitHub-commits",
+      "nothing": "Ingen afsluttet tid at tildele den dag",
+      "allAssigned": "Al tid den dag er allerede på et projekt. Slå Overskriv til for at lave det om ud fra dine commits.",
+      "allTyped": "Der er kun perioder tilbage, du selv har skrevet ind. De overskrives aldrig."
     }
   },
   "picker": {
