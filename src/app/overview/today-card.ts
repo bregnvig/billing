@@ -1,11 +1,9 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import {
-  Assignment,
   continuingAssignment,
   dailyTotals,
   PeriodRef,
   Project,
-  ProjectColor,
   runningPeriod,
   Task,
   TimeEntry,
@@ -18,12 +16,12 @@ import { ProjectsService } from '../data/projects.service';
 import { TimeEntriesService } from '../data/time-entries.service';
 import { LanguageService } from '../i18n/language.service';
 import { formatChange, formatDay, formatDuration, formatTime, formatWeekday } from '../ui/format';
-import { PROJECT_COLORS } from '../ui/marker';
 import { MetricCard } from '../ui/metric-card';
+import { pickTarget } from '../ui/pick-target';
 import { PickerResult, ProjectPicker } from '../ui/project-picker';
 import { ToastService } from '../ui/toast.service';
 import { dayStart, shiftDays } from './dates';
-import { DayTimeline, TimelinePeriod } from './day-timeline';
+import { DayTimeline, timelinePeriods } from './day-timeline';
 
 /**
  * The overview's Today card: time worked today against the same weekday last week, the day
@@ -48,13 +46,6 @@ export class TodayCard {
   readonly #locale = inject(LanguageService).locale;
 
   protected readonly today = computed(() => toIsoDate(this.now()));
-
-  readonly #colorOf = computed(() => {
-    const projects = this.projects();
-    return new Map<string, { color: ProjectColor; name: string }>(
-      projects.map((p, i) => [p.id, { color: p.color ?? PROJECT_COLORS[i % PROJECT_COLORS.length], name: p.name }]),
-    );
-  });
 
   protected readonly todayStart = computed(() => dayStart(this.today()));
   protected readonly todayLabel = computed(() => formatDay(this.now(), this.#locale()));
@@ -132,18 +123,9 @@ export class TodayCard {
     this.assigning.set(true);
     this.assignError.set(null);
     try {
-      let target: Assignment;
-      let name: string;
-      if ('createProject' in result) {
-        const project = await this.#projectsService.createProject(result.createProject, this.projects());
-        target = { projectId: project.id, taskId: null };
-        name = project.name;
-      } else {
-        target = result.assign;
-        const project = this.projects().find(p => p.id === target.projectId);
-        const task = this.tasks().find(t => t.id === target.taskId);
-        name = project ? (task ? `${project.name} / ${task.name}` : project.name) : '';
-      }
+      const { target, name } = await pickTarget(result, this.projects(), this.tasks(), n =>
+        this.#projectsService.createProject(n, this.projects()),
+      );
       const undo = await this.#entriesService.assign(refs, target);
       this.closeAssign(true);
       this.#toasts.show({
@@ -159,24 +141,7 @@ export class TodayCard {
     }
   };
 
-  protected readonly todayPeriods = computed((): TimelinePeriod[] => {
-    const colors = this.#colorOf();
-    return this.entries()
-      .filter((e: TimeEntry) => e.date === this.today())
-      .flatMap(e => {
-        const project = e.projectId ? colors.get(e.projectId) : undefined;
-        return e.periods.map(p => ({
-          id: p.id,
-          start: p.start,
-          end: p.end,
-          type: p.type,
-          color: project?.color ?? null,
-          label: project?.name ?? null,
-          labelKey: project ? null : e.projectId ? 'timeline.unknownProject' : 'timeline.unassigned',
-        }));
-      })
-      .sort((a, b) => a.start.getTime() - b.start.getTime());
-  });
+  protected readonly todayPeriods = computed(() => timelinePeriods(this.entries(), this.today(), this.projects()));
 
   protected readonly running = computed(() => {
     const r = runningPeriod(this.entries());

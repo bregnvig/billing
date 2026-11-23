@@ -82,6 +82,13 @@
         "mixed": "Several projects at once: {{repos}}",
         "pending": "Assigned on the next fetch"
       }
+    },
+    "previousDay": {
+      "title": "{{day}}",
+      "yesterday": "Yesterday, {{day}}",
+      "worked": "{{duration}} worked",
+      "hint": "Assign it, or sync it from your commits.",
+      "unassignedList": "Unassigned periods"
     }
   },
   "timeline": {

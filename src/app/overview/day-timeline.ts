@@ -1,7 +1,8 @@
 import { Component, computed, input } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
-import { ProjectColor } from '@loopme/model';
+import { IsoDate, Project, ProjectColor, TimeEntry } from '@loopme/model';
 import { formatDuration, formatTime } from '../ui/format';
+import { PROJECT_COLORS } from '../ui/marker';
 
 export interface TimelinePeriod {
   id: string;
@@ -134,3 +135,23 @@ export class DayTimeline {
     return ticks;
   });
 }
+
+/** A day's periods for the timeline, oldest first. Projects without a color get one by position. */
+export const timelinePeriods = (entries: readonly TimeEntry[], date: IsoDate, projects: readonly Project[]): TimelinePeriod[] => {
+  const byId = new Map(projects.map((p, i) => [p.id, { color: p.color ?? PROJECT_COLORS[i % PROJECT_COLORS.length], name: p.name }]));
+  return entries
+    .filter(e => e.date === date)
+    .flatMap(e => {
+      const project = e.projectId ? byId.get(e.projectId) : undefined;
+      return e.periods.map(p => ({
+        id: p.id,
+        start: p.start,
+        end: p.end,
+        type: p.type,
+        color: project?.color ?? null,
+        label: project?.name ?? null,
+        labelKey: project ? null : e.projectId ? 'timeline.unknownProject' : 'timeline.unassigned',
+      }));
+    })
+    .sort((a, b) => a.start.getTime() - b.start.getTime());
+};
