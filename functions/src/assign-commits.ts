@@ -31,6 +31,8 @@ export interface AssignResult {
   commits: number;
   assigned: number;
   left: number;
+  /** Finished work periods already on a project that were left as they are. */
+  kept: number;
   /** Repos whose commits couldn't be read (deleted branch, no access). */
   failedRepos: string[];
 }
@@ -74,7 +76,7 @@ const assignDay = async (
     for (const id of result.deletes) tx.delete(db.collection(COLLECTIONS.timeEntries).doc(id));
     return result;
   });
-  logger.info('assigned from commits', { date, tz, assigned: outcome.assigned, left: outcome.left });
+  logger.info('assigned from commits', { date, tz, assigned: outcome.assigned, left: outcome.left, kept: outcome.kept });
   return outcome;
 };
 
@@ -115,11 +117,12 @@ const assignDays = async (
   const rules = await loadRules(db);
   await saveCommitDays(db, datesBetween(first, addDays(commitWindowEnd(last), -1)), tz, commits, now);
 
-  const result: AssignResult = { commits: 0, assigned: 0, left: 0, failedRepos };
+  const result: AssignResult = { commits: 0, assigned: 0, left: 0, kept: 0, failedRepos };
   for (const date of datesBetween(first, last)) {
     const outcome = await assignDay(db, date, tz, commits, rules, now, overwrite);
     result.assigned += outcome.assigned;
     result.left += outcome.left;
+    result.kept += outcome.kept;
   }
   const [dayStart, dayEnd] = [startOfDayIn(first, tz), startOfDayIn(addDays(last, 1), tz)];
   result.commits = commits.filter(c => c.at >= dayStart && c.at < dayEnd).length;

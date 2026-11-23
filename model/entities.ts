@@ -62,8 +62,8 @@ export interface Period {
   type: PeriodType;
   source: PeriodSource;
   /**
-   * Set when the commit matching put the period where it is (model/commits.ts), so "Overwrite"
-   * may redo it. Left out once you move it yourself: then it's your choice and never overwritten.
+   * Set when the commit matching put the period where it is (model/commits.ts). Moving it yourself
+   * drops it. "Overwrite" redoes marked periods and the hook's periods; only typed-in ones are kept.
    */
   assignedBy?: 'commits';
 }

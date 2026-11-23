@@ -16,7 +16,7 @@ import {
   weekdayIndex,
 } from '@loopme/model';
 import { TranslatePipe } from '@ngx-translate/core';
-import { CommitsService } from '../data/commits.service';
+import { CommitsService, syncToast } from '../data/commits.service';
 import { liveEntries, liveProjects, liveTasks } from '../data/live';
 import { ProjectsService } from '../data/projects.service';
 import { TimeEntriesService } from '../data/time-entries.service';
@@ -307,19 +307,17 @@ export class WeekPage {
     });
 
   /**
-   * Assigns the day's unassigned time from its GitHub commits (Cloud Function). Only with the day's
-   * "Overwrite" toggle on does it also redo what it assigned before; time you assigned is never changed.
+   * Assigns the day's unassigned time from its GitHub commits (Cloud Function). With the day's
+   * "Overwrite" toggle on it redoes the whole day, except periods you typed in by hand.
    */
   protected readonly sync = async (date: IsoDate): Promise<void> => {
     if (this.syncing()) return;
     this.syncing.set(date);
     this.actionError.set(null);
     try {
-      const result = await this.#commits.assignDay(date, this.overwriting(date));
-      this.#toasts.show({
-        message: result.commits ? 'weekView.commits.done' : 'weekView.commits.none',
-        params: { commits: result.commits, assigned: result.assigned, left: result.left },
-      });
+      const overwrite = this.overwriting(date);
+      const result = await this.#commits.assignDay(date, overwrite);
+      this.#toasts.show(syncToast(result, overwrite));
     } catch {
       this.actionError.set('weekView.errors.commits');
     } finally {
