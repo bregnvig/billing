@@ -202,7 +202,15 @@
       "group": "Synkroniser fra GitHub-commits",
       "nothing": "Ingen afsluttet tid at tildele den dag",
       "allAssigned": "Al tid den dag er allerede på et projekt. Slå Overskriv til for at lave det om ud fra dine commits.",
-      "allTyped": "Der er kun perioder tilbage, du selv har skrevet ind. De overskrives aldrig."
+      "allTyped": "Der er kun perioder tilbage, du selv har skrevet ind. De overskrives aldrig.",
+      "panelTitle": "Commits",
+      "panelHint": "Et commit tager tiden siden dit forrige commit. Commits til forskellige projekter med under 15 minutters mellemrum kan ikke afgøres. Tiden efter dagens sidste commit venter op til 3 dage på dit næste commit.",
+      "notFetched": "Dagens commits er ikke hentet endnu. Synkroniser for at hente dem.",
+      "noneThatDay": "Ingen commits den dag.",
+      "list": "Commits",
+      "show": "Vis commits ({{count}})",
+      "showNotFetched": "Vis commits",
+      "hide": "Skjul commits"
     }
   },
   "picker": {
