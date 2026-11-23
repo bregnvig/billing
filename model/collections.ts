@@ -9,6 +9,10 @@ export const COLLECTIONS = {
   deviceTokens: 'deviceTokens',
   /** Read-only for the owner; written by `reportEvent`. */
   hookEvents: 'hookEvents',
+  /** Owner read/write: GitHub repo -> project/task rules (`RepoRule`). */
+  repoRules: 'repoRules',
+  /** Read-only for the owner; written by `assignFromCommits`: a day's commits (`CommitDay`, id = date). */
+  commitDays: 'commitDays',
   /** Cloud Functions only: `{date} -> { result, tz, at }`, days whose last period `padDayEnds` handled. */
   dayEnds: 'dayEnds',
 } as const;

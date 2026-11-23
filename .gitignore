@@ -56,3 +56,6 @@ functions/node_modules/
 
 # mise: personal overrides
 mise.local.toml
+
+# Local values for Cloud Functions secrets (the emulator reads them). Never commit.
+functions/.secret.local

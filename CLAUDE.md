@@ -16,13 +16,14 @@
   - Holds a list of **periods** (start/end), because the same project/task is often worked on several times a day.
   - Each period has a `type`: `work` or `break`. Breaks are recorded but don't count toward worked hours.
   - Each period has a `source`: `hook` (from the OS hooks) or `manual` (entered in the UI). All periods can be edited or deleted in the UI.
-  - A new hook period is its own period (own start/stop), but goes into the entry of the **same project + task as the most recent work period** (last 7 days, breaks skipped), since you're most likely continuing that work. With no previous work period, or an unassigned one, it lands in the day's **unassigned** entry (`projectId: null`). Reassign in the week view.
+  - A new hook period is its own period (own start/stop), but goes into the entry of the **same project + task as the most recent work period of the same day** (breaks skipped), since you're most likely continuing that work. **A new day starts unassigned**: the day's first period, or one after an unassigned period, lands in the day's **unassigned** entry (`projectId: null`), and the commit matching below assigns it. Reassign in the week view.
+  - **Assigning from GitHub commits** (`model/commits.ts`): a commit claims the time since the previous commit (the first one from the start of the day; time after the last commit goes to the last commit's project). Commits less than 15 minutes apart form a group; a group touching several projects, or a repo without a rule, is inconclusive and that time stays unassigned. Unassigned periods are split where the project changes (the first piece keeps the id). Only unassigned, finished work periods are touched. Rules map a repo (`owner/name`, lower case) to a project or one of its tasks (`repoRules`, edited on the project card). What couldn't be decided shows in the overview's **Needs a project** card, with the reason (`whyUnassigned`).
   - A running period has `end: null` until a stop is reported.
   - **Day edges are padded by 5 minutes** (`functions/src/day-edges.ts`), since the hook notices the start of a day late and its end early: the day's first hook period starts 5 minutes before its start event, and after midnight the nightly `padDayEnds` function gives the day's last period 5 more minutes. Never across midnight, and only hook periods (a day ending in a break or a manual period is left alone).
 
 The **shared model** lives in `model/` and is imported as `@loopme/model` by both the web app and Cloud Functions (path in `tsconfig.json` and `functions/tsconfig.json`). It holds the types, collection names (`COLLECTIONS`), `timeEntryId()`, durations and time-zone date helpers. Plain TypeScript only, with no Angular or Firebase imports. The Firestore converters stay per side because the web and admin SDKs differ: `src/app/data/converters.ts` and `functions/src/firestore.ts`.
 
-Collections: `projects`, `tasks`, `timeEntries` (owner read/write), `devices`, `hookEvents` (owner read-only, written by functions), `deviceTokens` and `dayEnds` (functions only).
+Collections: `projects`, `tasks`, `timeEntries`, `repoRules` (owner read/write), `devices`, `hookEvents`, `commitDays` (owner read-only, written by functions), `deviceTokens` and `dayEnds` (functions only).
 
 ## OS hooks and Cloud Functions
 
@@ -36,6 +37,8 @@ Collections: `projects`, `tasks`, `timeEntries` (owner read/write), `devices`, `
   - `reportEvent`: HTTP, auth via `Authorization: Bearer <device token>`. Only SHA-256 hashes of tokens are stored.
   - `createDevice` / `revokeDevice`: callable, owner only.
   - `padDayEnds`: scheduled daily at 00:05 Europe/Copenhagen. Pads the last period of yesterday (and the day before, if missed) in the time zone of the latest hook event, and records each handled day in `dayEnds/{date}` so it's padded once. The emulator doesn't run scheduled functions (no Pub/Sub emulator); the logic is unit-tested in `day-edges.ts`.
+  - `assignFromCommitsNightly`: scheduled daily at 00:30 (after `padDayEnds`), for yesterday and the day before (late pushes). `assignFromCommits`: callable, owner only, for one day (`{ date, tz }`): the week view's and overview's **Fetch from commits**. Both fetch your commits (`functions/src/github.ts`: your push events give repo + head, then the commits you authored from each head, timed by author date), save them in `commitDays/{date}` and assign that day's unassigned time.
+  - GitHub access: the secret **`GITHUB_TOKEN`**, a classic personal access token with `repo` scope. Set it with `firebase functions:secrets:set GITHUB_TOKEN --project prod`. For the emulator put `GITHUB_TOKEN=…` in `functions/.secret.local` (gitignored).
   - The event logic is pure and unit-tested in `functions/src/events.ts`.
 - Functions are bundled with esbuild (so `@loopme/model` is inlined) and type-checked with `tsc`. Pass options like region per function (`functions/src/options.ts`), not via `setGlobalOptions`: with ES modules that runs too late.
 
@@ -98,7 +101,7 @@ Collections: `projects`, `tasks`, `timeEntries` (owner read/write), `devices`, `
 - GitHub: `git@github.com:bregnvig/billing.git` (public). `main` is protected: changes go through a **branch + pull request**.
 - **CI** (`.github/workflows/ci.yml`) runs on every pull request to `main`: production build, web unit tests, functions build and the Node-side tests (functions, model, translations). It must pass before merging.
 - **Deploy** (`.github/workflows/deploy.yml`) runs on every push to `main` (and manually): CI first, then `firebase deploy --project prod` (Hosting, Firestore rules, Functions).
-- The deploy needs the repository secret `FIREBASE_SERVICE_ACCOUNT`: a JSON key for a Google Cloud service account in `billing-4e274` with the roles Firebase Admin, Cloud Functions Admin, Cloud Run Admin, Artifact Registry Administrator, Cloud Scheduler Admin (for `padDayEnds`) and Service Account User. Set it with `gh secret set FIREBASE_SERVICE_ACCOUNT < key.json`, then delete the local key file. Without it, the deploy job is skipped with a warning.
+- The deploy needs the repository secret `FIREBASE_SERVICE_ACCOUNT`: a JSON key for a Google Cloud service account in `billing-4e274` with the roles Firebase Admin, Cloud Functions Admin, Cloud Run Admin, Artifact Registry Administrator, Cloud Scheduler Admin (for the scheduled functions), Secret Manager Admin (for `GITHUB_TOKEN`) and Service Account User. The `GITHUB_TOKEN` secret must exist in `billing-4e274` before a deploy, or it fails. Set it with `gh secret set FIREBASE_SERVICE_ACCOUNT < key.json`, then delete the local key file. Without it, the deploy job is skipped with a warning.
 
 ## Commands
 

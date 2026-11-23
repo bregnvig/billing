@@ -102,10 +102,10 @@ describe('applyEvent: start carries the previous project and task', () => {
     expect(writes[0].periods[1]).toEqual({ id: 'ev-next', start: at, end: null, type: 'work', source: 'hook' });
   });
 
-  it('carries over from an earlier day (e.g. Monday continues Friday)', () => {
+  it('does not carry over from an earlier day: a new day starts unassigned', () => {
     const friday = taskEntry('2026-11-06', 'acme', null, [closed('fri', '2026-11-06', '09:00', '16:00')]);
     const { writes } = applyEvent([friday], event('start', cph('2026-11-09', '08:30'), 'mon'), now);
-    expect(writes[0]).toMatchObject({ id: '2026-11-09_acme_', date: '2026-11-09', projectId: 'acme', taskId: null });
+    expect(writes[0]).toMatchObject({ id: '2026-11-09__', date: '2026-11-09', projectId: null, taskId: null });
   });
 
   it('uses the latest work period, skipping breaks, and the most recent one wins', () => {

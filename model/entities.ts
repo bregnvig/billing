@@ -72,8 +72,9 @@ export interface TimeEntry {
   id: string;
   date: IsoDate;
   /**
-   * `null` means "not yet assigned". New hook periods inherit the project/task of the most recent
-   * work period (see functions/src/events.ts); without one they land in the day's unassigned entry.
+   * `null` means "not yet assigned". New hook periods inherit the project/task of the same day's most
+   * recent work period (see functions/src/events.ts); without one they land in the day's unassigned
+   * entry, which the nightly commit matching assigns (model/commits.ts).
    */
   projectId: string | null;
   /** Optional; must belong to `projectId` when set. Always `null` when `projectId` is `null`. */

@@ -1,8 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import {
-  addDays,
   Assignment,
-  CARRY_OVER_DAYS,
   continuingAssignment,
   dailyTotals,
   PeriodRef,
@@ -200,7 +198,7 @@ export class TodayCard {
 
   /**
    * Starts a running work period now, when nothing is running (e.g. working without the hook,
-   * or after a manual stop). Like the hook's start it continues the most recent work. The hook's
+   * or after a manual stop). Like the hook's start it continues today's most recent work. The hook's
    * next stop (lock, sleep, logout) ends it; its next start is ignored while this one runs.
    */
   protected readonly start = async (): Promise<void> => {
@@ -209,11 +207,7 @@ export class TodayCard {
     this.clockError.set(null);
     try {
       const start = new Date();
-      const since = addDays(this.today(), -CARRY_OVER_DAYS);
-      const target = continuingAssignment(
-        this.entries().filter(e => e.date >= since),
-        start,
-      );
+      const target = continuingAssignment(this.entries(), start, this.today());
       const undo = await this.#entriesService.addPeriod(this.today(), target, { start, end: null, type: 'work' });
       const project = this.projects().find(p => p.id === target.projectId);
       const task = this.tasks().find(t => t.id === target.taskId);

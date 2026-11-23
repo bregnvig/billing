@@ -1,5 +1,5 @@
 import { DocumentData, FirestoreDataConverter, QueryDocumentSnapshot, SnapshotOptions, Timestamp } from 'firebase/firestore';
-import { DefaultHours, Device, Period, Project, Task, TimeEntry } from '@loopme/model';
+import { CommitDay, DefaultHours, Device, IsoDate, Period, Project, RepoRule, Task, TimeEntry } from '@loopme/model';
 
 const toTimestamp = (d: Date | null) => (d ? Timestamp.fromDate(d) : null);
 const toDate = (t: unknown) => (t instanceof Timestamp ? t.toDate() : null);
@@ -97,6 +97,35 @@ export const deviceConverter: FirestoreDataConverter<Device> = {
       createdAt: toDate(data['createdAt']) ?? new Date(),
       lastSeenAt: toDate(data['lastSeenAt']),
       revokedAt: toDate(data['revokedAt']),
+    };
+  },
+};
+
+export const repoRuleConverter: FirestoreDataConverter<RepoRule> = {
+  toFirestore: ({ id: _id, ...r }: RepoRule): DocumentData => ({ ...r, ...auditToFirestore(r) }),
+  fromFirestore: (snapshot: QueryDocumentSnapshot, options?: SnapshotOptions): RepoRule => {
+    const data = snapshot.data(options);
+    return {
+      id: snapshot.id,
+      repo: data['repo'],
+      projectId: data['projectId'],
+      taskId: data['taskId'] ?? null,
+      ...auditFromFirestore(data),
+    };
+  },
+};
+
+/** Commit days are written only by Cloud Functions (`assignFromCommits`), so this converter only reads. */
+export const commitDayConverter: FirestoreDataConverter<CommitDay> = {
+  toFirestore: (): DocumentData => {
+    throw new Error('Commit days are written by Cloud Functions (assignFromCommits).');
+  },
+  fromFirestore: (snapshot: QueryDocumentSnapshot, options?: SnapshotOptions): CommitDay => {
+    const data = snapshot.data(options);
+    return {
+      id: snapshot.id as IsoDate,
+      commits: ((data['commits'] ?? []) as DocumentData[]).map(c => ({ repo: c['repo'], sha: c['sha'], at: toDate(c['at'])! })),
+      fetchedAt: toDate(data['fetchedAt']) ?? new Date(),
     };
   },
 };

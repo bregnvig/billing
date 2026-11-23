@@ -13,6 +13,7 @@
   } @if (loaded()) {
   <div class="mt-8 grid gap-4 lg:grid-cols-2">
     <app-today-card class="lg:col-span-2" [entries]="list()" [projects]="projectList()" [tasks]="taskList()" [now]="now()" />
+    <app-needs-project-card class="lg:col-span-2" [entries]="list()" [now]="now()" />
 
     <app-metric-card
       icon="date_range"

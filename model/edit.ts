@@ -122,17 +122,15 @@ export const setPeriodEnd = (entry: TimeEntry, periodId: string, end: Date | nul
   return { ...structuredClone(entry), periods: entry.periods.map(p => (p.id === periodId ? { ...p, end: clamped } : p)), updatedAt: now };
 };
 
-/** How many days back a new period looks for the work it continues (see `continuingAssignment`). */
-export const CARRY_OVER_DAYS = 7;
-
 /**
  * Where a newly started period goes: the project + task of the most recently started work period
- * up to `at` (breaks skipped), since you're most likely continuing that work. Unassigned when
- * there's none. Pass only the entries of the last `CARRY_OVER_DAYS` days. Shared by the OS hook's
- * start and the manual Start on the overview.
+ * on the same day (`date`) up to `at` (breaks skipped), since you're most likely continuing that
+ * work. A new day starts out unassigned: the nightly commit matching (commits.ts) decides it.
+ * Shared by the OS hook's start and the manual Start on the overview.
  */
-export const continuingAssignment = (entries: readonly TimeEntry[], at: Date): Assignment => {
+export const continuingAssignment = (entries: readonly TimeEntry[], at: Date, date: TimeEntry['date']): Assignment => {
   const previous = entries
+    .filter(entry => entry.date === date)
     .flatMap(entry => entry.periods.filter(p => p.type === 'work' && p.start <= at).map(period => ({ entry, period })))
     .sort((a, b) => b.period.start.getTime() - a.period.start.getTime())[0]?.entry;
   return previous?.projectId ? { projectId: previous.projectId, taskId: previous.taskId } : { projectId: null, taskId: null };

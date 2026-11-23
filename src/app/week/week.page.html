@@ -121,7 +121,18 @@
         </span>
         }
         <div class="ml-auto flex flex-wrap gap-2">
-          @if (day.unassignedRefs.length > 1) {
+          @if (day.unassignedRefs.length) {
+          <button
+            type="button"
+            class="flex h-9 items-center gap-1 rounded-full px-4 text-accent transition-colors duration-150 hover:bg-accent-soft disabled:opacity-60"
+            [disabled]="!!fetchingCommits()"
+            [attr.aria-busy]="fetchingCommits() === day.date"
+            [title]="'weekView.commits.hint' | translate"
+            (click)="assignFromCommits(day.date)">
+            <span class="material-symbols-outlined" aria-hidden="true">commit</span>
+            {{ (fetchingCommits() === day.date ? 'weekView.commits.fetching' : 'weekView.commits.fetch') | translate }}
+          </button>
+          } @if (day.unassignedRefs.length > 1) {
           <button
             type="button"
             [id]="'all-' + day.date"

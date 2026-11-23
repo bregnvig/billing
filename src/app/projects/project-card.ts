@@ -1,16 +1,17 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { Project, projectNameProblem, ProjectColor, Task } from '@loopme/model';
+import { Project, projectNameProblem, ProjectColor, RepoRule, Task } from '@loopme/model';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ProjectsService } from '../data/projects.service';
 import { formatClock } from '../ui/clock-time';
 import { Marker, PROJECT_COLORS } from '../ui/marker';
 import { ToastService } from '../ui/toast.service';
+import { RepoRules } from './repo-rules';
 import { TaskForm, TaskFormValue } from './task-form';
 
-/** One project: rename, color, archive, and its tasks. Archive and restore offer Undo. */
+/** One project: rename, color, archive, its tasks and its GitHub repos. Archive and restore offer Undo. */
 @Component({
   selector: 'app-project-card',
-  imports: [TranslatePipe, Marker, TaskForm],
+  imports: [TranslatePipe, Marker, TaskForm, RepoRules],
   templateUrl: './project-card.html',
   host: { class: 'block rounded-lg border border-line bg-surface p-6' },
 })
@@ -20,6 +21,8 @@ export class ProjectCard {
   readonly color = input.required<ProjectColor>();
   readonly projects = input.required<Project[]>();
   readonly tasks = input.required<Task[]>();
+  /** All repo → project/task rules. */
+  readonly repoRules = input.required<RepoRule[]>();
 
   readonly #service = inject(ProjectsService);
   readonly #toasts = inject(ToastService);

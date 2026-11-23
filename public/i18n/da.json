@@ -68,7 +68,20 @@
     "assignTitle": "Tildel dagens ikke tildelte tid",
     "assignHint": "Tildel {{count}} ikke tildelte periode(r) fra i dag ({{duration}}) til:",
     "openInWeek": "Åbn i ugevisning",
-    "unassignedPeriods": "Ikke tildelte perioder i dag"
+    "unassignedPeriods": "Ikke tildelte perioder i dag",
+    "needsProject": {
+      "title": "Mangler et projekt",
+      "hint": "Ikke-tildelt tid fra de sidste to uger, som dine commits ikke kunne afgøre.",
+      "assign": "Tildel",
+      "mapRepo": "Knyt repository",
+      "reason": {
+        "notFetched": "Commits er ikke hentet endnu",
+        "noCommits": "Ingen commits",
+        "unmapped": "Repository uden projekt: {{repos}}",
+        "mixed": "Flere projekter på én gang: {{repos}}",
+        "pending": "Tildeles ved næste hentning"
+      }
+    }
   },
   "timeline": {
     "periods": "{{count}} perioder",
@@ -157,7 +170,8 @@
       "assign": "Kunne ikke tildele. Tjek forbindelsen, og prøv igen.",
       "undo": "Kunne ikke fortryde. Tildel perioden igen manuelt.",
       "add": "Kunne ikke tilføje perioden. Tjek forbindelsen, og prøv igen.",
-      "save": "Kunne ikke gemme. Tjek forbindelsen, og prøv igen."
+      "save": "Kunne ikke gemme. Tjek forbindelsen, og prøv igen.",
+      "commits": "Kunne ikke læse dine commits fra GitHub. Prøv igen om lidt."
     },
     "addPeriod": "Tilføj periode",
     "added": "Periode {{start}}–{{end}} tilføjet",
@@ -173,7 +187,14 @@
     "deleteAria": "Slet perioden {{start}}–{{end}}",
     "deleted": "Periode {{start}}–{{end}} slettet",
     "openAll": "Åbn alle dage",
-    "closeAll": "Luk tidligere dage"
+    "closeAll": "Luk tidligere dage",
+    "commits": {
+      "fetch": "Hent fra commits",
+      "fetching": "Henter…",
+      "hint": "Tildel dagens ikke-tildelte tid ud fra dine GitHub-commits",
+      "done": "{{commits}} commits: {{assigned}} tildelt, {{left}} stadig ikke tildelt",
+      "none": "Ingen commits fundet den dag"
+    }
   },
   "picker": {
     "search": "Søg i projekter",
@@ -261,6 +282,23 @@
         "endBeforeStart": "Standardslut skal være efter start."
       },
       "save": "Kunne ikke gemme. Tjek forbindelsen, og prøv igen."
+    },
+    "repos": {
+      "title": "GitHub-repositories",
+      "hint": "Hver nat bruges commits i disse repositories til at tildele ikke-tildelt tid til projektet.",
+      "wholeProject": "Hele projektet",
+      "remove": "Fjern {{repo}}",
+      "none": "Ingen repositories.",
+      "repo": "Repository",
+      "placeholder": "ejer/navn",
+      "task": "Opgave",
+      "add": "Tilføj repository",
+      "errors": {
+        "required": "Skriv et repository, fx ejer/navn.",
+        "format": "Brug ejer/navn eller et GitHub-link.",
+        "taken": "Hører allerede til {{name}}."
+      },
+      "removed": "{{repo}} fjernet"
     }
   },
   "consent": {
