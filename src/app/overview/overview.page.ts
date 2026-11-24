@@ -24,6 +24,8 @@ import { LineChart } from '../ui/line-chart';
 import { MetricCard } from '../ui/metric-card';
 import { dayStart, shiftDays } from './dates';
 import { NeedsProjectCard } from './needs-project-card';
+import { PreviousDayCard } from './previous-day-card';
+import { previousDayToResolve } from './previous-day';
 import { TodayCard } from './today-card';
 import { WeekBarDay, WeekBars } from './week-bars';
 
@@ -34,7 +36,7 @@ const greetingKeyFor = (hour: number): string =>
 /** Landing page: today, this week and this month at a glance. */
 @Component({
   selector: 'app-overview-page',
-  imports: [MetricCard, TodayCard, NeedsProjectCard, WeekBars, LineChart, TranslatePipe],
+  imports: [MetricCard, TodayCard, PreviousDayCard, NeedsProjectCard, WeekBars, LineChart, TranslatePipe],
   templateUrl: './overview.page.html',
   styleUrl: './overview.page.scss',
 })
@@ -60,6 +62,8 @@ export class OverviewPage {
   }
 
   protected readonly list = computed(() => this.#entries.value() ?? []);
+  /** The previous day you worked, while it has unassigned time (shown under Today). */
+  protected readonly previousDay = computed(() => previousDayToResolve(this.list(), this.today()));
   protected readonly projectList = this.#catalog.projects;
   protected readonly taskList = this.#catalog.tasks;
   readonly #totals = computed(() => dailyTotals(this.list(), this.now()));

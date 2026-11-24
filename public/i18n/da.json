@@ -82,6 +82,13 @@
         "mixed": "Flere projekter på én gang: {{repos}}",
         "pending": "Tildeles ved næste hentning"
       }
+    },
+    "previousDay": {
+      "title": "{{day}}",
+      "yesterday": "I går, {{day}}",
+      "worked": "{{duration}} arbejdet",
+      "hint": "Tildel den, eller synkroniser den fra dine commits.",
+      "unassignedList": "Ikke-tildelte perioder"
     }
   },
   "timeline": {

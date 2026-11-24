@@ -29,6 +29,8 @@ export class NeedsProjectCard {
   /** Time entries covering at least the last `NEEDS_PROJECT_DAYS` days. */
   readonly entries = input.required<TimeEntry[]>();
   readonly now = input.required<Date>();
+  /** A day shown elsewhere (the previous day's own card), left out here. */
+  readonly skip = input<IsoDate | null>(null);
 
   readonly #commits = inject(CommitsService);
   readonly #toasts = inject(ToastService);
@@ -51,7 +53,7 @@ export class NeedsProjectCard {
     const rules = this.#rules();
     const byDay = new Map<IsoDate, { start: Date; end: Date }[]>();
     for (const entry of this.entries()) {
-      if (entry.projectId !== null || entry.date < from || entry.date > to) continue;
+      if (entry.projectId !== null || entry.date < from || entry.date > to || entry.date === this.skip()) continue;
       const periods = entry.periods.filter(p => p.type === 'work' && p.end).map(p => ({ start: p.start, end: p.end! }));
       if (periods.length) byDay.set(entry.date, [...(byDay.get(entry.date) ?? []), ...periods]);
     }
