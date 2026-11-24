@@ -1,0 +1,98 @@
+<div class="mx-auto max-w-5xl px-4 py-8 sm:px-8 sm:py-12">
+  <div class="flex flex-wrap items-center gap-2">
+    <ng-container *ngTemplateOutlet="arrow; context: { offset: -1, icon: 'chevron_left', label: 'monthView.previous' }" />
+    <ng-container *ngTemplateOutlet="arrow; context: { offset: 1, icon: 'chevron_right', label: 'monthView.next' }" />
+    @if (!isThisMonth()) {
+    <button
+      type="button"
+      class="h-9 rounded-full border border-line px-4 transition-colors duration-150 hover:bg-raised"
+      (click)="goToMonth(0)">
+      {{ 'monthView.thisMonth' | translate }}
+    </button>
+    }
+  </div>
+
+  <h1 class="mt-6 text-3xl font-normal">{{ title() }}</h1>
+  <p class="mt-3 text-xs text-muted">{{ 'monthView.shortcuts' | translate }}</p>
+
+  @if (error(); as key) {
+  <div class="mt-6 flex gap-3 rounded-lg border border-danger bg-surface p-4" role="alert">
+    <span class="material-symbols-outlined text-danger" aria-hidden="true">error</span>
+    <p>{{ key | translate }}</p>
+  </div>
+  } @if (loaded()) {
+  <section class="mt-8 rounded-lg border border-line bg-surface">
+    <h2 class="flex items-center gap-2 p-6 pb-4 text-base font-medium">
+      <span class="material-symbols-outlined text-muted" aria-hidden="true">table_chart</span>
+      {{ 'monthView.byProject' | translate }}
+    </h2>
+    @if (rows().length) {
+    <div class="overflow-x-auto px-6 pb-6">
+      <table class="w-full text-sm tabular-nums">
+        <caption class="sr-only">{{ 'monthView.caption' | translate: { month: title() } }}</caption>
+        <thead>
+          <tr class="bg-raised text-xs font-medium text-muted">
+            <th scope="col" class="rounded-l-md px-3 py-2 text-left font-medium">{{ 'monthView.project' | translate }}</th>
+            @for (w of weeks(); track w.week) {
+            <th scope="col" class="px-3 py-2 text-right font-medium whitespace-nowrap">
+              <a
+                routerLink="/week"
+                [queryParams]="w.link"
+                class="text-accent hover:underline"
+                [attr.aria-label]="'monthView.openWeek' | translate: { week: w.week }">
+                {{ 'monthView.week' | translate: { week: w.week } }}
+              </a>
+              <span class="block font-normal">{{ w.range }}</span>
+            </th>
+            }
+            <th scope="col" class="rounded-r-md px-3 py-2 text-right font-medium">{{ 'monthView.total' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.key) {
+          <tr class="border-b border-line">
+            <th scope="row" class="px-3 py-3 text-left font-normal">
+              <span class="flex items-center gap-2">
+                @if (row.color) {
+                <app-marker [color]="row.color" />
+                } @else {
+                <span class="size-3 shrink-0 rounded-full border-2 border-unassigned" aria-hidden="true"></span>
+                }
+                <span class="truncate">{{ row.name ?? (row.labelKey! | translate) }}</span>
+              </span>
+            </th>
+            @for (ms of row.weeks; track $index) {
+            <td class="px-3 py-3 text-right" [class.text-muted]="ms < minute">{{ ms < minute ? '–' : duration(ms) }}</td>
+            }
+            <td class="px-3 py-3 text-right font-medium">{{ duration(row.total) }}</td>
+          </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr class="font-medium">
+            <th scope="row" class="px-3 py-3 text-left font-medium">{{ 'monthView.allProjects' | translate }}</th>
+            @for (ms of weekTotals(); track $index) {
+            <td class="px-3 py-3 text-right" [class.text-muted]="ms < minute">{{ ms < minute ? '–' : duration(ms) }}</td>
+            }
+            <td class="px-3 py-3 text-right text-xl font-normal">{{ duration(total()) }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    } @else {
+    <p class="px-6 pb-6 text-muted">{{ 'monthView.noTime' | translate }}</p>
+    }
+  </section>
+  }
+</div>
+
+<ng-template #arrow let-offset="offset" let-icon="icon" let-label="label">
+  <button
+    type="button"
+    class="flex size-9 items-center justify-center rounded-full border border-line transition-colors duration-150 hover:bg-raised"
+    [attr.aria-label]="label | translate"
+    [title]="label | translate"
+    (click)="goToMonth(offset)">
+    <span class="material-symbols-outlined" aria-hidden="true">{{ icon }}</span>
+  </button>
+</ng-template>

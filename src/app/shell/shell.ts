@@ -26,6 +26,7 @@ export class Shell {
   protected readonly nav = [
     { path: '/overview', icon: 'dashboard', label: 'nav.overview' },
     { path: '/week', icon: 'calendar_view_week', label: 'nav.week' },
+    { path: '/month', icon: 'calendar_month', label: 'nav.month' },
     { path: '/projects', icon: 'folder', label: 'nav.projects' },
     { path: '/settings', icon: 'settings', label: 'nav.settings' },
   ];

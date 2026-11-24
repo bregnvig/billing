@@ -3,6 +3,7 @@
     "main": "Hovedmenu",
     "overview": "Overblik",
     "week": "Uge",
+    "month": "Måned",
     "projects": "Projekter",
     "settings": "Indstillinger",
     "signOut": "Log ud {{email}}",
@@ -219,6 +220,20 @@
       "showNotFetched": "Vis commits",
       "hide": "Skjul commits"
     }
+  },
+  "monthView": {
+    "previous": "Forrige måned",
+    "next": "Næste måned",
+    "thisMonth": "Denne måned",
+    "shortcuts": "Taster: ← → skift måned · T denne måned",
+    "byProject": "Arbejdstimer pr. projekt",
+    "caption": "Arbejdstimer pr. projekt og uge, {{month}}",
+    "project": "Projekt",
+    "week": "Uge {{week}}",
+    "openWeek": "Åbn uge {{week}}",
+    "total": "I alt",
+    "allProjects": "Alle projekter",
+    "noTime": "Ingen tid registreret i denne måned."
   },
   "picker": {
     "search": "Søg i projekter",

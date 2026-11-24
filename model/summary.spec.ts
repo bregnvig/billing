@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Period, TimeEntry } from './entities';
-import { dailyTotals, runningPeriod, workMsBetween } from './summary';
+import { dailyTotals, monthSummary, runningPeriod, workMsBetween } from './summary';
 
 const at = (date: string, hhmm: string) => new Date(`${date}T${hhmm}:00Z`);
 const H = 3_600_000;
@@ -47,5 +47,46 @@ describe('summary', () => {
   it('finds the running period', () => {
     expect(runningPeriod(entries)?.period.id).toBe('d');
     expect(runningPeriod(entries.slice(0, 2))).toBeNull();
+  });
+});
+
+describe('monthSummary', () => {
+  const month = [
+    entry('2026-10-30', 'acme', [p('x', at('2026-10-30', '08:00'), at('2026-10-30', '16:00'))]), // October: ignored
+    entry('2026-11-02', 'acme', [p('a', at('2026-11-02', '08:00'), at('2026-11-02', '12:00'))]),
+    entry('2026-11-02', 'beta', [
+      p('b', at('2026-11-02', '12:00'), at('2026-11-02', '12:30'), 'break'),
+      p('c', at('2026-11-02', '12:30'), at('2026-11-02', '15:00')),
+    ]),
+    entry('2026-11-11', 'beta', [p('d', at('2026-11-11', '08:00'), at('2026-11-11', '16:00'))]),
+    entry('2026-11-30', null, [p('e', at('2026-11-30', '09:00'), null)]),
+  ];
+  const summary = monthSummary(month, '2026-11-15', at('2026-11-30', '10:00'));
+
+  it('splits the month into ISO weeks clipped to the month', () => {
+    expect(summary.weeks).toEqual([
+      { week: 44, from: '2026-11-01', to: '2026-11-01' },
+      { week: 45, from: '2026-11-02', to: '2026-11-08' },
+      { week: 46, from: '2026-11-09', to: '2026-11-15' },
+      { week: 47, from: '2026-11-16', to: '2026-11-22' },
+      { week: 48, from: '2026-11-23', to: '2026-11-29' },
+      { week: 49, from: '2026-11-30', to: '2026-11-30' },
+    ]);
+  });
+
+  it('totals work per project and week, most time first, unassigned last, breaks excluded', () => {
+    expect(summary.rows).toEqual([
+      { projectId: 'beta', weeks: [0, 2.5 * H, 8 * H, 0, 0, 0], total: 10.5 * H },
+      { projectId: 'acme', weeks: [0, 4 * H, 0, 0, 0, 0], total: 4 * H },
+      { projectId: null, weeks: [0, 0, 0, 0, 0, 1 * H], total: 1 * H },
+    ]);
+    expect(summary.weekTotals).toEqual([0, 6.5 * H, 8 * H, 0, 0, 1 * H]);
+    expect(summary.total).toBe(15.5 * H);
+  });
+
+  it('is empty without time', () => {
+    const empty = monthSummary([], '2026-02-01', now);
+    expect(empty.weeks.map(w => w.week)).toEqual([5, 6, 7, 8, 9]);
+    expect(empty).toMatchObject({ rows: [], total: 0 });
   });
 });
