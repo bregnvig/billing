@@ -13,7 +13,7 @@ import { Marker, PROJECT_COLORS } from '../ui/marker';
 
 const isMonth = (value: string | undefined): value is string => !!value && /^\d{4}-\d{2}$/.test(value);
 
-/** The month view: worked time per project and ISO week, with totals. */
+/** The month view: the month's total per week, then a card per project with its tasks per week. */
 @Component({
   selector: 'app-month-page',
   imports: [TranslatePipe, Marker, RouterLink, NgTemplateOutlet],
@@ -56,7 +56,7 @@ export class MonthPage {
     })),
   );
 
-  protected readonly rows = computed(() => {
+  protected readonly cards = computed(() => {
     const projects = new Map(
       this.#catalog
         .projects()
@@ -65,19 +65,34 @@ export class MonthPage {
           { name: p.name, color: p.color ?? PROJECT_COLORS[i % PROJECT_COLORS.length] },
         ]),
     );
-    return this.#summary().rows.map(row => {
+    const taskNames = new Map(this.#catalog.tasks().map(t => [t.id, t.name]));
+    const rows = this.#summary().rows;
+    // One scale for all cards, so bars compare across projects.
+    const max = Math.max(1, ...rows.flatMap(r => r.weeks));
+    return rows.map(row => {
       const project = row.projectId ? projects.get(row.projectId) : undefined;
+      const tasks = row.tasks.map(task => ({
+        ...task,
+        key: task.taskId ?? '',
+        name: task.taskId ? (taskNames.get(task.taskId) ?? null) : null,
+        labelKey: task.taskId ? 'monthView.unknownTask' : 'monthView.noTask',
+      }));
       return {
-        ...row,
         key: row.projectId ?? '',
         name: project?.name ?? null,
-        color: project?.color ?? null,
         labelKey: project ? null : row.projectId ? 'timeline.unknownProject' : 'timeline.unassigned',
+        color: project?.color ?? null,
+        bar: row.projectId === null ? 'var(--color-unassigned)' : `var(--color-project-${project?.color ?? 'blue'})`,
+        total: row.total,
+        weeks: row.weeks.map(ms => ({ ms, pct: (ms / max) * 100 })),
+        // Only worth listing when the project's time is split, or sits on a task.
+        tasks: tasks.length > 1 || tasks[0]?.taskId ? tasks : [],
       };
     });
   });
   protected readonly weekTotals = computed(() => this.#summary().weekTotals);
   protected readonly total = computed(() => this.#summary().total);
+  protected readonly unassigned = computed(() => this.#summary().rows.find(r => r.projectId === null)?.total ?? 0);
 
   protected readonly duration = formatDuration;
   protected readonly minute = 60_000;
