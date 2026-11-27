@@ -357,5 +357,10 @@
       "necessary": "Din login-session (Firebase), tema, sprog og dette valg gemmes på din enhed, så appen virker. De bruges ikke til sporing og deles ikke.",
       "devNote": "Dette er en udviklingsversion: her sendes aldrig statistik, uanset hvad du vælger."
     }
+  },
+  "version": {
+    "available": "Der er kommet en ny version af Loopme.",
+    "reload": "Genindlæs",
+    "dismiss": "Ikke nu"
   }
 }

@@ -225,6 +225,7 @@ Both themes are first-class. The Firebase screenshots are dark, and light follow
 | **Unassigned time** | Amber-outlined bars + an amber badge in the day card and page header (`1:20 unassigned`). One click to assign. |
 | **Running** | Green pulsing end on the bar, live duration, a `Running` badge, and a `Stop` action. |
 | **Error / offline** | Info-banner style at the top, in `danger`: what happened + what to do (`Can't reach the database. Is the emulator running? Changes will sync when it's back.`). Never lose an edit. |
+| **New version** | When a deploy lands while the app is open: a floating info banner at the top (below the phone bar), `info` icon in accent, `A new version of Loopme is out.`, a `Reload` text button and `×` (Not now). `role="status"`, never a modal, never reloads by itself. |
 | **Saved** | Optimistic: the change shows instantly; a brief `Saved` toast only if it took longer than 1s. |
 
 ## 7. Interaction rules
