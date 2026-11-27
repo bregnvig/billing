@@ -1,70 +1,52 @@
 import { TestBed } from '@angular/core/testing';
-import { NavigationError, provideRouter, Router } from '@angular/router';
-import { mainScript, VersionService } from './version.service';
+import { SwUpdate, VersionEvent } from '@angular/service-worker';
+import { Subject } from 'rxjs';
+import { VersionService } from './version.service';
 
-const page = (main: string) =>
-  `<!doctype html><html><head></head><body><app-root></app-root><script src="${main}" type="module"></script></body></html>`;
-
-const setup = (running: string | null, live: string | Error) => {
-  document.body.querySelectorAll('script[data-test]').forEach(s => s.remove());
-  if (running) {
-    const script = document.createElement('script');
-    script.dataset['test'] = '';
-    script.type = 'text/plain'; // don't let jsdom load it
-    script.setAttribute('src', running);
-    document.body.append(script);
-  }
-  const fetchMock = vi.fn(async () => {
-    if (live instanceof Error) throw live;
-    return new Response(page(live));
+const setup = (isEnabled = true) => {
+  const versionUpdates = new Subject<VersionEvent>();
+  const unrecoverable = new Subject<{ type: 'UNRECOVERABLE_STATE'; reason: string }>();
+  const checkForUpdate = vi.fn(async () => true);
+  TestBed.configureTestingModule({
+    providers: [{ provide: SwUpdate, useValue: { isEnabled, versionUpdates, unrecoverable, checkForUpdate } }],
   });
-  vi.stubGlobal('fetch', fetchMock);
-  TestBed.configureTestingModule({ providers: [provideRouter([])] });
-  return { version: TestBed.inject(VersionService), fetchMock };
+  return { version: TestBed.inject(VersionService), versionUpdates, unrecoverable, checkForUpdate };
 };
 
+const ready = { type: 'VERSION_READY', currentVersion: { hash: 'a' }, latestVersion: { hash: 'b' } } as VersionEvent;
+
 describe('VersionService', () => {
-  afterEach(() => vi.unstubAllGlobals());
-
-  it('finds the hashed entry script, not the dev one', () => {
-    expect(mainScript(page('main-GNBCOOYH.js'))).toBe('main-GNBCOOYH.js');
-    expect(mainScript(page('main.js'))).toBeNull();
-  });
-
-  it('offers a reload once the live index.html names another entry script, until dismissed', async () => {
-    const { version } = setup('main-OLD111.js', 'main-NEW222.js');
-    expect(version.updateAvailable()).toBe(false);
-    await version.check();
-    expect(version.updateAvailable()).toBe(true);
+  it('offers a reload once a new version is ready, until dismissed', () => {
+    const { version, versionUpdates } = setup();
+    versionUpdates.next({ type: 'VERSION_DETECTED', version: { hash: 'b' } });
+    expect(version.reloadReason()).toBeNull();
+    versionUpdates.next(ready);
+    expect(version.reloadReason()).toBe('update');
     version.dismiss();
-    expect(version.updateAvailable()).toBe(false);
+    expect(version.reloadReason()).toBeNull();
   });
 
-  it('stays quiet when the version is the same', async () => {
-    const { version } = setup('main-SAME.js', 'main-SAME.js');
+  it('insists on a reload when the cached version is broken, even after dismissing', () => {
+    const { version, unrecoverable } = setup();
+    version.dismiss();
+    unrecoverable.next({ type: 'UNRECOVERABLE_STATE', reason: 'gone' });
+    expect(version.reloadReason()).toBe('broken');
+  });
+
+  it('checks for a new version when the tab becomes visible, and survives being offline', async () => {
+    const { checkForUpdate } = setup();
+    checkForUpdate.mockRejectedValueOnce(new Error('offline'));
+    document.dispatchEvent(new Event('visibilitychange'));
+    await Promise.resolve();
+    expect(checkForUpdate).toHaveBeenCalledTimes(1);
+    window.dispatchEvent(new Event('online'));
+    expect(checkForUpdate).toHaveBeenCalledTimes(2);
+  });
+
+  it('does nothing without a service worker', async () => {
+    const { version, checkForUpdate } = setup(false);
     await version.check();
-    expect(version.updateAvailable()).toBe(false);
-  });
-
-  it("stays quiet when the server can't be reached", async () => {
-    const { version } = setup('main-OLD111.js', new TypeError('Failed to fetch'));
-    await version.check();
-    expect(version.updateAvailable()).toBe(false);
-  });
-
-  it('never checks in a dev build', async () => {
-    const { version, fetchMock } = setup('main.js', 'main-NEW222.js');
-    await version.check();
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(version.updateAvailable()).toBe(false);
-  });
-
-  it('offers a reload when a page fails to load because its chunk is gone', () => {
-    const { version } = setup('main-OLD111.js', 'main-OLD111.js');
-    const router = TestBed.inject(Router);
-    (router.events as unknown as { next: (e: unknown) => void }).next(
-      new NavigationError(1, '/month', new TypeError('Failed to fetch dynamically imported module: https://x/chunk-ABC.js')),
-    );
-    expect(version.updateAvailable()).toBe(true);
+    expect(checkForUpdate).not.toHaveBeenCalled();
+    expect(version.reloadReason()).toBeNull();
   });
 });

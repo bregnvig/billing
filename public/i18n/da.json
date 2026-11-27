@@ -360,6 +360,7 @@
   },
   "version": {
     "available": "Der er kommet en ny version af Loopme.",
+    "broken": "Loopme skal genindlæses for at virke igen.",
     "reload": "Genindlæs",
     "dismiss": "Ikke nu"
   }

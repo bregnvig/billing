@@ -360,6 +360,7 @@
   },
   "version": {
     "available": "A new version of Loopme is out.",
+    "broken": "Loopme has to be reloaded to keep working.",
     "reload": "Reload",
     "dismiss": "Not now"
   }

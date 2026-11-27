@@ -1,55 +1,54 @@
 import { DestroyRef, inject, Injectable, signal } from '@angular/core';
-import { NavigationError, Router } from '@angular/router';
+import { SwUpdate } from '@angular/service-worker';
 
-/** The app's hashed entry script (`main-GNBCOOYH.js`) named in an `index.html`. `null` in dev builds (`main.js`). */
-export const mainScript = (html: string): string | null => /\bmain-[\w-]+\.js\b/.exec(html)?.[0] ?? null;
-
-/** How often an open, visible tab asks whether a new version is out. */
+/** How often an open, visible tab asks the service worker to look for a new version. */
 export const CHECK_INTERVAL_MS = 10 * 60_000;
 
-/** A lazy page that can't load: its chunk is gone, most likely replaced by a deploy. */
-const isChunkLoadError = (error: unknown): boolean =>
-  /dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(String(error));
+/** Why the app should be reloaded. */
+export type ReloadReason = 'update' | 'broken';
 
 /**
- * Notices when a new version is deployed while the app is open, so `ReloadBanner` can offer a
- * reload. Compares the entry script this tab runs with the one the live `index.html` names, when
- * the tab becomes visible again, comes back online, and every 10 minutes while visible. A lazy
- * page failing to load (its chunk removed by a deploy) counts as a new version too.
- * Does nothing in dev builds, whose entry script isn't hashed.
+ * Tells `ReloadBanner` when to offer a reload, from the Angular service worker (`SwUpdate`):
+ * - `update`: a new version is deployed and downloaded (`VERSION_READY`); reloading switches to it.
+ * - `broken`: the cached version can't be served any more (`unrecoverable`); only a reload helps.
+ * Besides the service worker's own checks (on start and navigation), it checks when the tab
+ * becomes visible, comes back online, and every 10 minutes while visible.
+ * Does nothing without a service worker (dev builds, tests, unsupported browsers).
  */
 @Injectable({ providedIn: 'root' })
 export class VersionService {
-  readonly #running = mainScript(document.head.outerHTML + document.body.outerHTML);
-  readonly #available = signal(false);
+  readonly #sw = inject(SwUpdate);
+  readonly #reason = signal<ReloadReason | null>(null);
   readonly #dismissed = signal(false);
 
-  /** A newer version is deployed and the banner wasn't closed. */
-  readonly updateAvailable = () => this.#available() && !this.#dismissed();
+  /** Why to reload, unless the banner was closed ("broken" can't be closed). */
+  readonly reloadReason = (): ReloadReason | null => (this.#reason() === 'update' && this.#dismissed() ? null : this.#reason());
 
   constructor() {
-    inject(Router).events.subscribe(event => {
-      if (event instanceof NavigationError && isChunkLoadError(event.error)) this.#available.set(true);
-    });
-    if (!this.#running) return;
+    if (!this.#sw.isEnabled) return;
+    const subscriptions = [
+      this.#sw.versionUpdates.subscribe(event => {
+        if (event.type === 'VERSION_READY' && this.#reason() === null) this.#reason.set('update');
+      }),
+      this.#sw.unrecoverable.subscribe(() => this.#reason.set('broken')),
+    ];
     const onVisible = () => document.visibilityState === 'visible' && void this.check();
     const timer = setInterval(onVisible, CHECK_INTERVAL_MS);
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('online', onVisible);
     inject(DestroyRef).onDestroy(() => {
+      subscriptions.forEach(s => s.unsubscribe());
       clearInterval(timer);
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('online', onVisible);
     });
   }
 
-  /** Asks the server for the live `index.html`. Offline or failing: try again next time. */
+  /** Asks the service worker to look for a new version. Offline or failing: tried again next time. */
   readonly check = async (): Promise<void> => {
-    if (!this.#running || this.#available()) return;
+    if (!this.#sw.isEnabled || this.#reason()) return;
     try {
-      const response = await fetch('/index.html', { cache: 'no-store' });
-      const live = response.ok ? mainScript(await response.text()) : null;
-      if (live && live !== this.#running) this.#available.set(true);
+      await this.#sw.checkForUpdate();
     } catch {
       // Offline: checked again when back online.
     }
@@ -58,5 +57,6 @@ export class VersionService {
   /** Hides the banner until the app is reloaded. */
   readonly dismiss = (): void => this.#dismissed.set(true);
 
+  /** Reloading loads the newest version the service worker has. */
   readonly reload = (): void => location.reload();
 }
