@@ -3,6 +3,7 @@
     "main": "Main",
     "overview": "Overview",
     "week": "Week",
+    "month": "Month",
     "projects": "Projects",
     "settings": "Settings",
     "signOut": "Sign out {{email}}",
@@ -219,6 +220,20 @@
       "showNotFetched": "Show commits",
       "hide": "Hide commits"
     }
+  },
+  "monthView": {
+    "previous": "Previous month",
+    "next": "Next month",
+    "thisMonth": "This month",
+    "shortcuts": "Keys: ← → change month · T this month",
+    "byProject": "Worked hours by project",
+    "caption": "Worked hours by project and week, {{month}}",
+    "project": "Project",
+    "week": "Week {{week}}",
+    "openWeek": "Open week {{week}}",
+    "total": "Total",
+    "allProjects": "All projects",
+    "noTime": "No time recorded this month."
   },
   "picker": {
     "search": "Search projects",

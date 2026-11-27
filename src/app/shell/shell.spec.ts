@@ -48,7 +48,7 @@ describe('Shell', () => {
     const drawerLinks = [...el.querySelectorAll<HTMLAnchorElement>('#menu-drawer nav a')];
     // textContent also holds the icon's ligature name (e.g. 'dashboard'), so match the end.
     expect(drawerLinks.map(a => a.textContent?.trim())).toEqual(
-      ['Overview', 'Week', 'Projects', 'Settings'].map(l => expect.stringMatching(new RegExp(`${l}$`))),
+      ['Overview', 'Week', 'Month', 'Projects', 'Settings'].map(l => expect.stringMatching(new RegExp(`${l}$`))),
     );
     const drawerWeek = drawerLinks[1];
     expect(drawerWeek.classList).toContain('bg-accent-soft');

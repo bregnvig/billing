@@ -52,6 +52,7 @@ Collections: `projects`, `tasks`, `timeEntries`, `repoRules` (owner read/write),
 
 - A weekday view (Mon–Fri) showing hours worked per day, broken down by project/task.
 - Editing start/stop times and the project/task assignment of an entry.
+- A month view: worked hours per project and ISO week, with project and month totals.
 - Managing projects and their (optional) tasks.
 
 ## Tech stack
