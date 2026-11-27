@@ -357,5 +357,11 @@
       "necessary": "Your sign-in session (Firebase), theme, language and this choice are stored on your device so the app works. They aren't used for tracking and aren't shared.",
       "devNote": "This is a development build: no analytics is ever sent here, whatever you choose."
     }
+  },
+  "version": {
+    "available": "A new version of Loopme is out.",
+    "broken": "Loopme has to be reloaded to keep working.",
+    "reload": "Reload",
+    "dismiss": "Not now"
   }
 }
