@@ -48,12 +48,22 @@ export interface MonthWeek {
   to: IsoDate;
 }
 
-/** A project's worked time in a month. `projectId: null` = unassigned. */
-export interface MonthRow {
-  projectId: string | null;
-  /** Per week, in the order of `MonthSummary.weeks`. */
+/** Worked time in a month, per week (in the order of `MonthSummary.weeks`) and in total. */
+export interface MonthTime {
   weeks: number[];
   total: number;
+}
+
+/** A task's worked time in a month. `taskId: null` = time on the project without a task. */
+export interface MonthTaskRow extends MonthTime {
+  taskId: string | null;
+}
+
+/** A project's worked time in a month. `projectId: null` = unassigned. */
+export interface MonthRow extends MonthTime {
+  projectId: string | null;
+  /** Most time first, time without a task last. Empty for unassigned. */
+  tasks: MonthTaskRow[];
 }
 
 export interface MonthSummary {
@@ -65,9 +75,15 @@ export interface MonthSummary {
   total: number;
 }
 
+/** Most time first, the `null` one (unassigned / no task) last. */
+const byTime =
+  <K extends 'projectId' | 'taskId'>(key: K) =>
+  (a: MonthTime & Record<K, string | null>, b: MonthTime & Record<K, string | null>) =>
+    a[key] === null ? 1 : b[key] === null ? -1 : b.total - a.total;
+
 /**
- * Worked milliseconds per project and ISO week for the month `monthStart` is in, by the entries'
- * dates. A week crossing the month's edge only counts its days inside the month.
+ * Worked milliseconds per project, task and ISO week for the month `monthStart` is in, by the
+ * entries' dates. A week crossing the month's edge only counts its days inside the month.
  */
 export const monthSummary = (entries: readonly TimeEntry[], monthStart: IsoDate, now: Date): MonthSummary => {
   const first = startOfMonth(monthStart);
@@ -78,18 +94,30 @@ export const monthSummary = (entries: readonly TimeEntry[], monthStart: IsoDate,
     weeks.push({ week: isoWeek(from), from, to: sunday < last ? sunday : last });
   }
   const weekOf = (date: IsoDate) => weeks.findIndex(w => date >= w.from && date <= w.to);
+  const add = (time: MonthTime, index: number, ms: number) => {
+    time.weeks[index] += ms;
+    time.total += ms;
+  };
 
-  const rows = new Map<string | null, MonthRow>();
+  const projects = new Map<string | null, { row: MonthRow; tasks: Map<string | null, MonthTaskRow> }>();
   for (const { entry, period } of workPeriods(entries)) {
     const index = weekOf(entry.date);
     if (index < 0) continue;
     const ms = Math.max(0, (period.end ?? now).getTime() - period.start.getTime());
-    const row = rows.get(entry.projectId) ?? { projectId: entry.projectId, weeks: weeks.map(() => 0), total: 0 };
-    row.weeks[index] += ms;
-    row.total += ms;
-    rows.set(entry.projectId, row);
+    const project = projects.get(entry.projectId) ?? {
+      row: { projectId: entry.projectId, weeks: weeks.map(() => 0), total: 0, tasks: [] },
+      tasks: new Map(),
+    };
+    projects.set(entry.projectId, project);
+    add(project.row, index, ms);
+    if (entry.projectId === null) continue;
+    const task = project.tasks.get(entry.taskId) ?? { taskId: entry.taskId, weeks: weeks.map(() => 0), total: 0 };
+    project.tasks.set(entry.taskId, task);
+    add(task, index, ms);
   }
-  const sorted = [...rows.values()].sort((a, b) => (a.projectId === null ? 1 : b.projectId === null ? -1 : b.total - a.total));
-  const weekTotals = weeks.map((_, i) => sorted.reduce((sum, row) => sum + row.weeks[i], 0));
-  return { weeks, rows: sorted, weekTotals, total: weekTotals.reduce((sum, ms) => sum + ms, 0) };
+  const rows = [...projects.values()]
+    .map(({ row, tasks }) => ({ ...row, tasks: [...tasks.values()].sort(byTime('taskId')) }))
+    .sort(byTime('projectId'));
+  const weekTotals = weeks.map((_, i) => rows.reduce((sum, row) => sum + row.weeks[i], 0));
+  return { weeks, rows, weekTotals, total: weekTotals.reduce((sum, ms) => sum + ms, 0) };
 };

@@ -27,6 +27,8 @@ describe('dates in English', () => {
   it('formats ranges', () => {
     expect(formatRange(new Date(2026, 10, 2), new Date(2026, 10, 8), 'en-GB')).toBe('2–8 Nov');
     expect(formatRange(new Date(2026, 9, 26), new Date(2026, 10, 1), 'en-GB')).toBe('26 Oct – 1 Nov');
+    expect(formatRange(new Date(2026, 10, 1), new Date(2026, 10, 1), 'en-GB')).toBe('1 Nov');
+    expect(formatRange(new Date(2026, 10, 1), new Date(2026, 10, 1), 'da-DK')).toBe('1. nov.');
   });
 });
 

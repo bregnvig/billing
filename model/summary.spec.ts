@@ -11,11 +11,11 @@ const p = (id: string, start: Date, end: Date | null, type: Period['type'] = 'wo
   type,
   source: 'hook',
 });
-const entry = (date: string, projectId: string | null, periods: Period[]): TimeEntry => ({
-  id: `${date}_${projectId ?? ''}_`,
+const entry = (date: string, projectId: string | null, periods: Period[], taskId: string | null = null): TimeEntry => ({
+  id: `${date}_${projectId ?? ''}_${taskId ?? ''}`,
   date: date as TimeEntry['date'],
   projectId,
-  taskId: null,
+  taskId,
   periods,
   note: null,
   createdAt: new Date(0),
@@ -75,13 +75,33 @@ describe('monthSummary', () => {
   });
 
   it('totals work per project and week, most time first, unassigned last, breaks excluded', () => {
-    expect(summary.rows).toEqual([
+    expect(summary.rows.map(({ tasks, ...row }) => row)).toEqual([
       { projectId: 'beta', weeks: [0, 2.5 * H, 8 * H, 0, 0, 0], total: 10.5 * H },
       { projectId: 'acme', weeks: [0, 4 * H, 0, 0, 0, 0], total: 4 * H },
       { projectId: null, weeks: [0, 0, 0, 0, 0, 1 * H], total: 1 * H },
     ]);
     expect(summary.weekTotals).toEqual([0, 6.5 * H, 8 * H, 0, 0, 1 * H]);
     expect(summary.total).toBe(15.5 * H);
+  });
+
+  it('splits each project into its tasks, most time first, time without a task last', () => {
+    const withTasks = monthSummary(
+      [
+        entry('2026-11-02', 'acme', [p('a', at('2026-11-02', '08:00'), at('2026-11-02', '09:00'))]),
+        entry('2026-11-02', 'acme', [p('b', at('2026-11-02', '09:00'), at('2026-11-02', '11:00'))], 'api'),
+        entry('2026-11-10', 'acme', [p('c', at('2026-11-10', '08:00'), at('2026-11-10', '11:00'))], 'web'),
+        entry('2026-11-11', 'acme', [p('d', at('2026-11-11', '08:00'), at('2026-11-11', '10:00'))], 'api'),
+        entry('2026-11-12', null, [p('e', at('2026-11-12', '08:00'), at('2026-11-12', '09:00'))]),
+      ],
+      '2026-11-01',
+      now,
+    );
+    expect(withTasks.rows[0].tasks).toEqual([
+      { taskId: 'api', weeks: [0, 2 * H, 2 * H, 0, 0, 0], total: 4 * H },
+      { taskId: 'web', weeks: [0, 0, 3 * H, 0, 0, 0], total: 3 * H },
+      { taskId: null, weeks: [0, 1 * H, 0, 0, 0, 0], total: 1 * H },
+    ]);
+    expect(withTasks.rows[1]).toMatchObject({ projectId: null, tasks: [] });
   });
 
   it('is empty without time', () => {

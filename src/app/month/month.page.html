@@ -21,68 +21,106 @@
     <p>{{ key | translate }}</p>
   </div>
   } @if (loaded()) {
-  <section class="mt-8 rounded-lg border border-line bg-surface">
-    <h2 class="flex items-center gap-2 p-6 pb-4 text-base font-medium">
-      <span class="material-symbols-outlined text-muted" aria-hidden="true">table_chart</span>
-      {{ 'monthView.byProject' | translate }}
-    </h2>
-    @if (rows().length) {
-    <div class="overflow-x-auto px-6 pb-6">
-      <table class="w-full text-sm tabular-nums">
-        <caption class="sr-only">{{ 'monthView.caption' | translate: { month: title() } }}</caption>
-        <thead>
-          <tr class="bg-raised text-xs font-medium text-muted">
-            <th scope="col" class="rounded-l-md px-3 py-2 text-left font-medium">{{ 'monthView.project' | translate }}</th>
+  <div class="mt-8 flex flex-col gap-4">
+    <!-- The month: total, then each week. -->
+    <section class="rounded-lg border border-line bg-surface p-6" aria-labelledby="month-total">
+      <h2 class="flex items-center gap-2 text-base font-medium">
+        <span class="material-symbols-outlined text-muted" aria-hidden="true">calendar_month</span>
+        <span id="month-total">{{ 'monthView.worked' | translate }}</span>
+      </h2>
+      <p class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span class="text-xl tabular-nums">{{ duration(total()) }}</span>
+        @if (unassigned() >= minute) {
+        <span class="rounded-full border border-unassigned px-3 py-1 text-xs tabular-nums">
+          {{ 'overview.unassigned' | translate: { duration: duration(unassigned()) } }}
+        </span>
+        }
+      </p>
+      <ul class="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-6">
+        @for (w of weeks(); track w.week; let i = $index) {
+        <li>
+          <a
+            routerLink="/week"
+            [queryParams]="w.link"
+            class="flex flex-col rounded-md bg-raised px-3 py-2 transition-colors duration-150 hover:bg-line"
+            [attr.aria-label]="'monthView.openWeekAria' | translate: { week: w.week, range: w.range, duration: duration(weekTotals()[i]) }">
+            <span class="text-xs font-medium text-accent">{{ 'monthView.week' | translate: { week: w.week } }}</span>
+            <span class="text-xs text-muted">{{ w.range }}</span>
+            <span class="mt-1 tabular-nums" [class.text-muted]="weekTotals()[i] < minute">{{ duration(weekTotals()[i]) }}</span>
+          </a>
+        </li>
+        }
+      </ul>
+    </section>
+
+    <!-- A card per project (unassigned last): bars per week, then its tasks. -->
+    @for (card of cards(); track card.key) {
+    <section class="rounded-lg border border-line bg-surface p-6" [attr.aria-labelledby]="'project-' + card.key">
+      <h2 class="flex items-center gap-2">
+        @if (card.color) {
+        <app-marker [color]="card.color" />
+        } @else {
+        <span class="size-3 shrink-0 rounded-full border-2 border-unassigned" aria-hidden="true"></span>
+        }
+        <span class="min-w-0 flex-1 truncate text-base font-medium" [id]="'project-' + card.key">
+          {{ card.name ?? (card.labelKey! | translate) }}
+        </span>
+        <span class="text-xl tabular-nums">{{ duration(card.total) }}</span>
+      </h2>
+      <div class="mt-4 overflow-x-auto">
+        <table class="w-full min-w-xl table-fixed text-sm tabular-nums">
+          <colgroup>
+            <col class="w-1/4" />
             @for (w of weeks(); track w.week) {
-            <th scope="col" class="px-3 py-2 text-right font-medium whitespace-nowrap">
-              <a
-                routerLink="/week"
-                [queryParams]="w.link"
-                class="text-accent hover:underline"
-                [attr.aria-label]="'monthView.openWeek' | translate: { week: w.week }">
-                {{ 'monthView.week' | translate: { week: w.week } }}
-              </a>
-              <span class="block font-normal">{{ w.range }}</span>
-            </th>
+            <col />
             }
-            <th scope="col" class="rounded-r-md px-3 py-2 text-right font-medium">{{ 'monthView.total' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of rows(); track row.key) {
-          <tr class="border-b border-line">
-            <th scope="row" class="px-3 py-3 text-left font-normal">
-              <span class="flex items-center gap-2">
-                @if (row.color) {
-                <app-marker [color]="row.color" />
-                } @else {
-                <span class="size-3 shrink-0 rounded-full border-2 border-unassigned" aria-hidden="true"></span>
-                }
-                <span class="truncate">{{ row.name ?? (row.labelKey! | translate) }}</span>
-              </span>
-            </th>
-            @for (ms of row.weeks; track $index) {
-            <td class="px-3 py-3 text-right" [class.text-muted]="ms < minute">{{ ms < minute ? '–' : duration(ms) }}</td>
+            <col />
+          </colgroup>
+          <thead>
+            <tr class="text-xs text-muted">
+              <th scope="col" class="px-2 pb-2 text-left font-medium">
+                <span class="sr-only">{{ 'monthView.task' | translate }}</span>
+              </th>
+              @for (w of weeks(); track w.week) {
+              <th scope="col" class="px-2 pb-2 text-right font-medium">{{ 'monthView.weekShort' | translate: { week: w.week } }}</th>
+              }
+              <th scope="col" class="px-2 pb-2 text-right font-medium">{{ 'monthView.total' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" class="px-2 text-left align-bottom text-xs font-normal text-muted">{{ 'monthView.perWeek' | translate }}</th>
+              @for (week of card.weeks; track $index) {
+              <td class="px-2 align-bottom">
+                <div class="flex h-16 items-end justify-end" aria-hidden="true">
+                  <div class="w-full max-w-8 rounded-t-sm" [style.height.%]="week.pct" [style.background]="card.bar"></div>
+                </div>
+                <p class="mt-1 text-right text-xs" [class.text-muted]="week.ms < minute">
+                  {{ week.ms < minute ? '–' : duration(week.ms) }}
+                </p>
+              </td>
+              }
+              <td class="px-2 text-right align-bottom text-xs font-medium">{{ duration(card.total) }}</td>
+            </tr>
+            @for (task of card.tasks; track task.key) {
+            <tr class="border-t border-line">
+              <th scope="row" class="truncate px-2 py-3 text-left font-normal" [class.text-muted]="!task.taskId">
+                {{ task.name ?? (task.labelKey | translate) }}
+              </th>
+              @for (ms of task.weeks; track $index) {
+              <td class="px-2 py-3 text-right" [class.text-muted]="ms < minute">{{ ms < minute ? '–' : duration(ms) }}</td>
+              }
+              <td class="px-2 py-3 text-right font-medium">{{ duration(task.total) }}</td>
+            </tr>
             }
-            <td class="px-3 py-3 text-right font-medium">{{ duration(row.total) }}</td>
-          </tr>
-          }
-        </tbody>
-        <tfoot>
-          <tr class="font-medium">
-            <th scope="row" class="px-3 py-3 text-left font-medium">{{ 'monthView.allProjects' | translate }}</th>
-            @for (ms of weekTotals(); track $index) {
-            <td class="px-3 py-3 text-right" [class.text-muted]="ms < minute">{{ ms < minute ? '–' : duration(ms) }}</td>
-            }
-            <td class="px-3 py-3 text-right text-xl font-normal">{{ duration(total()) }}</td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-    } @else {
-    <p class="px-6 pb-6 text-muted">{{ 'monthView.noTime' | translate }}</p>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    } @empty {
+    <p class="rounded-lg border border-line bg-surface p-6 text-muted">{{ 'monthView.noTime' | translate }}</p>
     }
-  </section>
+  </div>
   }
 </div>
 

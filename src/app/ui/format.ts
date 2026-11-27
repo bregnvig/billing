@@ -53,10 +53,11 @@ export const formatLongDate = (d: Date, locale: Locale): string =>
     ? `${formatWeekday(d, locale)} ${d.getDate()}. ${formatMonth(d, locale)}`
     : `${formatWeekday(d, locale)} ${d.getDate()} ${formatMonth(d, locale)}`;
 
-/** `3–7 Nov`, `27 Oct – 2 Nov` / `3.–7. nov.`, `27. okt. – 2. nov.` */
+/** `3–7 Nov`, `27 Oct – 2 Nov`, `1 Nov` (one day) / `3.–7. nov.`, `27. okt. – 2. nov.`, `1. nov.` */
 export const formatRange = (from: Date, to: Date, locale: Locale): string => {
   const month = (d: Date) => fmt(locale, { month: 'short' }).format(d);
   const day = (d: Date) => (locale === 'da-DK' ? `${d.getDate()}.` : `${d.getDate()}`);
+  if (from.toDateString() === to.toDateString()) return `${day(to)} ${month(to)}`;
   return from.getMonth() === to.getMonth()
     ? `${day(from)}–${day(to)} ${month(to)}`
     : `${day(from)} ${month(from)} – ${day(to)} ${month(to)}`;
